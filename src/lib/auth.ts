@@ -59,6 +59,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
+        console.log('=== GOOGLE LOGIN DATA ===');
+        console.log('User:', user);
+        console.log('Account:', account);
+        console.log('Profile:', profile);
+        console.log('===========================');
+        
         try {
           await connectDB();
           

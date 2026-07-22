@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 const { auth } = NextAuth(authConfig);
 
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/chat', '/documents', '/shared', '/workspaces', '/profile', '/settings'];
 const authRoutes = ['/login', '/register'];
 
 export default auth((req) => {
@@ -16,7 +16,7 @@ export default auth((req) => {
 
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', nextUrl));
+      return NextResponse.redirect(new URL('/chat', nextUrl));
     }
     return NextResponse.next();
   }

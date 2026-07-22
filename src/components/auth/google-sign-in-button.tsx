@@ -11,7 +11,7 @@ export function GoogleSignInButton() {
   const loginWithGoogle = async () => {
     try {
       setIsLoading(true);
-      await signIn('google', { callbackUrl: '/dashboard' });
+      await signIn('google', { callbackUrl: '/chat' });
     } catch (error) {
       console.error(error);
     } finally {
