@@ -5,16 +5,16 @@ import { Document } from "@/models/Document";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authentication
+    // 1. Database Connection
+    await connectDB();
+
+    // 2. Authentication
     const session = await auth();
     const userId = await getDbUserId(session);
     
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized or User not found" }, { status: 401 });
     }
-
-    // 2. Connect to database
-    await connectDB();
 
     // 3. Fetch documents for the user, sorted by newest
     const documents = await Document.find({ userId })
@@ -23,7 +23,6 @@ export async function GET(req: NextRequest) {
         "_id originalFileName storedFileName fileType mimeType fileSize storagePath processingStatus createdAt updatedAt"
       )
       .lean();
-
     // 4. Return success
     return NextResponse.json({ documents }, { status: 200 });
   } catch (error: any) {
