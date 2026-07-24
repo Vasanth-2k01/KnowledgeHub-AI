@@ -101,3 +101,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export async function getDbUserId(session: any): Promise<string | null> {
+    if (!session || !session.user || !session.user.id) return null;
+    
+    let userId = session.user.id;
+    const mongoose = (await import("mongoose")).default;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        const User = (await import("@/models/User")).default;
+        const dbUser = await User.findOne({ email: session.user.email });
+        if (!dbUser) {
+            return null;
+        }
+        userId = dbUser._id.toString();
+    }
+    return userId;
+}
