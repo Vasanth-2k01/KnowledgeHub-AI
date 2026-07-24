@@ -9,6 +9,11 @@ export interface IDocument extends MongooseDocument {
   fileSize: number;
   storagePath: string;
   processingStatus: "uploaded" | "processing" | "completed" | "failed";
+  indexedAt?: Date;
+  chunkCount?: number;
+  vectorCount?: number;
+  embeddingModel?: string;
+  indexVersion?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +33,11 @@ const documentSchema = new Schema<IDocument>(
       default: "uploaded",
       required: true,
     },
+    indexedAt: { type: Date },
+    chunkCount: { type: Number },
+    vectorCount: { type: Number },
+    embeddingModel: { type: String },
+    indexVersion: { type: Number, default: 1 },
   },
   {
     timestamps: true,
@@ -35,5 +45,9 @@ const documentSchema = new Schema<IDocument>(
 );
 
 // Prevent mongoose from recompiling the model in development if it already exists
-export const Document =
-  mongoose.models.Document || mongoose.model<IDocument>("Document", documentSchema);
+// Delete it from cache to ensure schema updates apply during Hot Module Reload
+if (mongoose.models.Document) {
+  delete mongoose.models.Document;
+}
+
+export const Document = mongoose.model<IDocument>("Document", documentSchema);

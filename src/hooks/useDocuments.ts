@@ -10,7 +10,12 @@ export interface DocumentData {
   mimeType: string;
   fileSize: number;
   storagePath: string;
-  processingStatus: "uploaded" | "processing" | "completed" | "failed";
+  processingStatus: "uploaded" | "processing" | "completed" | "failed" | "indexing";
+  indexedAt?: string;
+  chunkCount?: number;
+  vectorCount?: number;
+  embeddingModel?: string;
+  indexVersion?: number;
   createdAt: string;
   updatedAt: string;
 }

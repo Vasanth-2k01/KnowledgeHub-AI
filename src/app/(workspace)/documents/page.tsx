@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useDocuments, DocumentData } from "@/hooks/useDocuments"
+import { useDocumentIndex } from "@/hooks/useDocumentIndex"
 
 export default function DocumentsPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
@@ -22,6 +23,7 @@ export default function DocumentsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { documents, isLoading, fetchDocuments, setDocuments } = useDocuments()
+  const { isIndexing, indexDocument } = useDocumentIndex(documents, setDocuments, fetchDocuments)
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
@@ -68,6 +70,11 @@ export default function DocumentsPage() {
       
       // Refresh documents list
       await fetchDocuments()
+      
+      // Automatically trigger indexing
+      if (data.documentId) {
+        indexDocument(data.documentId)
+      }
     } catch (error: any) {
       console.error("Upload error:", error)
       toast.error(error.message || "Something went wrong during upload")
@@ -121,6 +128,7 @@ export default function DocumentsPage() {
       case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
       case 'uploaded': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800'
       case 'processing': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+      case 'indexing': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800'
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
       default: return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
     }
@@ -339,6 +347,15 @@ export default function DocumentsPage() {
                     <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Download (Coming Soon)</DropdownMenuItem>
                     <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Rename (Coming Soon)</DropdownMenuItem>
                     <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Reprocess (Coming Soon)</DropdownMenuItem>
+                    {doc.processingStatus === 'failed' && (
+                      <DropdownMenuItem 
+                        onClick={() => indexDocument(doc._id)} 
+                        disabled={isIndexing[doc._id]} 
+                        className="text-blue-600 dark:text-blue-400 font-medium cursor-pointer"
+                      >
+                        Retry Indexing
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>
                       Delete (Coming Soon)
@@ -350,12 +367,27 @@ export default function DocumentsPage() {
               <div className="mt-4">
                 <h4 className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-50 truncate" title={doc.originalFileName}>{doc.originalFileName}</h4>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">{formatSize(doc.fileSize)} • {doc.fileType}</p>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium truncate mr-2">{formatDate(doc.createdAt)}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border capitalize ${getStatusColor(doc.processingStatus)}`}>
-                    {doc.processingStatus}
-                  </span>
-                </div>
+                {doc.processingStatus === 'completed' && doc.chunkCount !== undefined ? (
+                  <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/50">
+                    <div className="flex items-center justify-between mb-1">
+                       <span className="text-[11px] font-medium text-green-600 dark:text-green-500">✓ Indexed</span>
+                       <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{doc.indexedAt ? formatDate(doc.indexedAt) : 'Recently'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                      <span>Chunks: {doc.chunkCount}</span>
+                      <span>Vectors: {doc.vectorCount}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium truncate mr-2">{formatDate(doc.createdAt)}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border capitalize ${getStatusColor(doc.processingStatus)}`}>
+                      {doc.processingStatus === 'indexing' || isIndexing[doc._id] ? (
+                        <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin"/> Indexing...</span>
+                      ) : doc.processingStatus}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -387,7 +419,9 @@ export default function DocumentsPage() {
                   <td className="px-6 py-4 text-zinc-500 hidden md:table-cell">{formatDate(doc.createdAt)}</td>
                   <td className="px-6 py-4">
                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border capitalize ${getStatusColor(doc.processingStatus)}`}>
-                      {doc.processingStatus}
+                      {doc.processingStatus === 'indexing' || isIndexing[doc._id] ? (
+                        <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin"/> Indexing...</span>
+                      ) : doc.processingStatus}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -399,6 +433,15 @@ export default function DocumentsPage() {
                         <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Download (Coming Soon)</DropdownMenuItem>
                         <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Rename (Coming Soon)</DropdownMenuItem>
                         <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Reprocess (Coming Soon)</DropdownMenuItem>
+                        {doc.processingStatus === 'failed' && (
+                          <DropdownMenuItem 
+                            onClick={() => indexDocument(doc._id)} 
+                            disabled={isIndexing[doc._id]} 
+                            className="text-blue-600 dark:text-blue-400 font-medium cursor-pointer"
+                          >
+                            Retry Indexing
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>
                           Delete (Coming Soon)

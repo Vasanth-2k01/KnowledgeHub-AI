@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const documents = await Document.find({ userId })
       .sort({ createdAt: -1 })
       .select(
-        "_id originalFileName storedFileName fileType mimeType fileSize storagePath processingStatus createdAt updatedAt"
+        "_id originalFileName storedFileName fileType mimeType fileSize storagePath processingStatus chunkCount vectorCount indexedAt embeddingModel indexVersion createdAt updatedAt"
       )
       .lean();
     // 4. Return success
