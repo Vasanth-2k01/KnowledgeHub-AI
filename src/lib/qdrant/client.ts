@@ -42,6 +42,23 @@ export async function ensureCollection() {
     } else {
       console.log(`Qdrant collection ${COLLECTION_NAME} already exists.`);
     }
+
+    // Ensure payload indexes exist for efficient filtering
+    try {
+      await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+        field_name: "userId",
+        field_schema: "keyword",
+        wait: true,
+      });
+      await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+        field_name: "documentId",
+        field_schema: "keyword",
+        wait: true,
+      });
+      console.log(`Payload indexes verified for ${COLLECTION_NAME}.`);
+    } catch (e: any) {
+      console.log(`Payload index verification message: ${e.message}`);
+    }
   } catch (error) {
     console.error('Error ensuring Qdrant collection:', error);
     throw error;
