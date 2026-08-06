@@ -41,15 +41,38 @@ export default function ChatPage() {
         body: JSON.stringify({ query: userMsg }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Failed to get response");
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
       }
 
-      setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response stream available");
+
+      const decoder = new TextDecoder("utf-8");
+      
+      // Initialize an empty assistant message to stream into
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      let currentAssistantMessage = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        currentAssistantMessage += chunk;
+        
+        // Update the last message in real-time
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1].content = currentAssistantMessage;
+          return newMessages;
+        });
+      }
+      console.log('messages',messages);
+      
     } catch (error: any) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${error.message}` }]);
+      setMessages(prev => [...prev, { role: "assistant", content: `Something went wrong while generating the answer: ${error.message}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -97,14 +120,14 @@ export default function ChatPage() {
               </div>
             ))}
             
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex gap-4 justify-start">
                 <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Bot className="h-5 w-5" />
                 </div>
                 <div className="px-5 py-3.5 rounded-2xl bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
-                  <span className="text-zinc-500 text-sm">Searching and thinking...</span>
+                  <span className="text-zinc-500 text-sm">Thinking...</span>
                 </div>
               </div>
             )}

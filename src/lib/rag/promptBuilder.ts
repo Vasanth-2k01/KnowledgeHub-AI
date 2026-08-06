@@ -19,6 +19,6 @@ ${context}
 Question:
 ${question}
 
-Answer:
+Provide a concise answer using only the context above.
 `;
 }

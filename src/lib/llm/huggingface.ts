@@ -37,4 +37,56 @@ export class LLMService {
       throw new Error(`LLM Generation Failed: ${error.message}`);
     }
   }
+
+  /**
+   * Generates a streaming answer using a HuggingFace LLM given a fully constructed prompt.
+   * 
+   * @param prompt The complete RAG prompt
+   * @param model The specific HuggingFace model string (e.g. "Qwen/Qwen3-8B")
+   * @returns A ReadableStream of text chunks
+   */
+  static generateAnswerStream(prompt: string, model: string): ReadableStream {
+    const apiKey = process.env.HUGGINGFACE_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("Missing HUGGINGFACE_API_KEY environment variable.");
+    }
+
+    const hf = new HfInference(apiKey);
+
+    return new ReadableStream({
+      async start(controller) {
+        try {
+          const stream = hf.chatCompletionStream({
+            model: model,
+            messages: [{ role: "user", content: prompt }],
+            max_tokens: 512,
+            temperature: 0.1,
+          });
+
+          let isFirstChunk = true;
+          const encoder = new TextEncoder();
+
+          for await (const chunk of stream) {
+            let content = chunk.choices?.[0]?.delta?.content ?? "";
+
+            if (isFirstChunk) {
+              content = content.replace(/^\s+/, "");
+              if (content) {
+                isFirstChunk = false;
+              }
+            }
+
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+          controller.close();
+        } catch (error: any) {
+          console.error(`[LLMService] Error streaming answer with model ${model}:`, error);
+          controller.error(error);
+        }
+      }
+    });
+  }
 }

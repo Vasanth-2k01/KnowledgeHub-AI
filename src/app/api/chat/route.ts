@@ -19,10 +19,14 @@ export async function POST(req: Request) {
     }
 
     // Call the ChatService orchestrator
-    const response = await ChatService.handleQuery(query, userId, documentId);
+    const stream = await ChatService.handleStreamingQuery(query, userId, documentId);
 
-    return NextResponse.json(response);
-
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      },
+    });
   } catch (error: any) {
     console.error("[Chat API Error]", error);
     return NextResponse.json(
