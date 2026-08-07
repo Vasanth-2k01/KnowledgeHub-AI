@@ -42,11 +42,9 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
   const { addChatOptimistically, updateChatOptimistically } = useChatContext()
 
   useEffect(() => {
-    if (initialMessages) {
-      setMessages(initialMessages);
-    }
+    setMessages(initialMessages || []);
     setChatId(initialChatId);
-  }, [initialChatId]);
+  }, [initialChatId, initialMessages]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

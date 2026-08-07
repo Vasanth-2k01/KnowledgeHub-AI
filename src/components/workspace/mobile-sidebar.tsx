@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Menu, Plus, MessageSquare, FileText, Share2, Briefcase, Settings, Command, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,7 @@ export function MobileSidebar({ session }: { session: Session | null }) {
   const [open, setOpen] = useState(false)
   const [chatsExpanded, setChatsExpanded] = useState(true)
   const pathname = usePathname()
+  const router = useRouter()
   const { chats, isLoading } = useChatContext()
 
   // Close the sheet when the route changes
@@ -69,7 +70,7 @@ export function MobileSidebar({ session }: { session: Session | null }) {
         <div className="px-3 py-2">
           <Button 
             className="w-full justify-start rounded-xl shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition-all h-10"
-            onClick={() => { setOpen(false); window.location.href = '/chat' }}
+            onClick={() => { setOpen(false); router.push('/chat'); }}
           >
             <Plus className="h-4 w-4 shrink-0 mr-2" />
             <span>New Chat</span>
