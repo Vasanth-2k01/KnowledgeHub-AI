@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils"
 import { UserDropdown } from "./user-dropdown"
 import { Session } from "next-auth"
+import { useChatContext } from "@/context/ChatContext"
 
 const bottomRoutes = [
   {
@@ -32,17 +33,12 @@ const bottomRoutes = [
   },
 ]
 
-const mockChats = [
-  { id: "1", title: "React Authentication" },
-  { id: "2", title: "RAG Overview" },
-  { id: "3", title: "MongoDB Notes" },
-  { id: "4", title: "Next.js App Router" },
-]
 
 export function MobileSidebar({ session }: { session: Session | null }) {
   const [open, setOpen] = useState(false)
   const [chatsExpanded, setChatsExpanded] = useState(true)
   const pathname = usePathname()
+  const { chats, isLoading } = useChatContext()
 
   // Close the sheet when the route changes
   useEffect(() => {
@@ -92,38 +88,44 @@ export function MobileSidebar({ session }: { session: Session | null }) {
             </button>
             {chatsExpanded && (
               <div className="space-y-0.5 animate-in slide-in-from-top-1 fade-in duration-200">
-                {mockChats.map((chat) => (
-                  <div key={chat.id} className="group relative flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200/50 dark:text-zinc-300 dark:hover:bg-zinc-800/50 transition-colors">
-                    <Link
-                      href={`/chat/${chat.id}`}
-                      className="flex-1 truncate pr-6 block"
-                      onClick={() => setOpen(false)}
-                    >
-                      {chat.title}
-                    </Link>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="absolute right-1 h-6 w-6 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100" />}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                        <DropdownMenuItem className="cursor-pointer">
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer">
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Share
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 dark:text-red-500 dark:focus:text-red-400 dark:focus:bg-red-950/50 group/delete">
-                          <Trash className="mr-2 h-4 w-4 text-red-600 dark:text-red-500 group-focus/delete:text-red-700 dark:group-focus/delete:text-red-400" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
+                {isLoading && chats.length === 0 ? (
+                  <div className="px-2 py-2 text-xs text-zinc-500">Loading chats...</div>
+                ) : chats.length === 0 ? (
+                  <div className="px-2 py-2 text-xs text-zinc-500">No chats yet.</div>
+                ) : (
+                  chats.map((chat) => (
+                    <div key={chat._id} className="group relative flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200/50 dark:text-zinc-300 dark:hover:bg-zinc-800/50 transition-colors">
+                      <Link
+                        href={`/chat/${chat._id}`}
+                        className="flex-1 truncate pr-6 block"
+                        onClick={() => setOpen(false)}
+                      >
+                        {chat.title}
+                      </Link>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="absolute right-1 h-6 w-6 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100" />}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 dark:text-red-500 dark:focus:text-red-400 dark:focus:bg-red-950/50 group/delete">
+                            <Trash className="mr-2 h-4 w-4 text-red-600 dark:text-red-500 group-focus/delete:text-red-700 dark:group-focus/delete:text-red-400" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

@@ -62,18 +62,18 @@ export default function DocumentsPage() {
       
       const data = await response.json()
       
-      if (!response.ok) {
-        throw new Error(data.error || "Upload failed")
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || "Upload failed")
       }
 
-      toast.success("Document uploaded successfully")
+      toast.success(data.message || "Document uploaded successfully")
       
       // Refresh documents list
       await fetchDocuments()
       
       // Automatically trigger indexing
-      if (data.documentId) {
-        indexDocument(data.documentId)
+      if (data.data?.documentId) {
+        indexDocument(data.data.documentId)
       }
     } catch (error: any) {
       console.error("Upload error:", error)

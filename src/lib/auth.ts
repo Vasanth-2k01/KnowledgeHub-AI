@@ -108,6 +108,7 @@ export async function getDbUserId(session: any): Promise<string | null> {
     let userId = session.user.id;
     const mongoose = (await import("mongoose")).default;
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+        await connectDB();
         const User = (await import("@/models/User")).default;
         const dbUser = await User.findOne({ email: session.user.email });
         if (!dbUser) {

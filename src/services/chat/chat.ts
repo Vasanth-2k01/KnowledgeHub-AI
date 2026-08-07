@@ -2,6 +2,7 @@ import { SemanticSearchService, SemanticSearchResult } from "@/services/search/s
 import { buildRagPrompt } from "@/lib/rag/promptBuilder";
 import { LLMService } from "@/lib/llm/huggingface";
 import { AppSettingsService } from "@/services/settings/appSettings";
+import { ChatRepository } from "@/services/chat/repository";
 
 export interface ChatResponse {
   answer: string;
@@ -77,7 +78,8 @@ export class ChatService {
   static async handleStreamingQuery(
     question: string,
     userId: string,
-    documentId?: string
+    documentId?: string,
+    chatId?: string
   ): Promise<ReadableStream> {
     
     // 1. Semantic Search (Retrieval)
@@ -86,10 +88,29 @@ export class ChatService {
 
     // 2. Handle "no context found"
     if (!chunks || chunks.length === 0) {
+      const fallbackMsg = "I couldn't find any relevant information in the uploaded documents.";
       return new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode("I couldn't find any relevant information in the uploaded documents."));
+        async start(controller) {
+          controller.enqueue(new TextEncoder().encode(fallbackMsg));
           controller.close();
+
+          // Save assistant message and generate title
+          if (chatId) {
+            try {
+              await ChatRepository.saveMessage(chatId, "assistant", fallbackMsg);
+              
+              const chat = await ChatRepository.getChatById(chatId);
+              if (chat && chat.title === "New Chat") {
+                const settings = await AppSettingsService.getSettings();
+                if (settings.ai.llmModel) {
+                  const newTitle = await LLMService.generateChatTitle(question, settings.ai.llmModel);
+                  await ChatRepository.updateChatTitle(chatId, newTitle);
+                }
+              }
+            } catch (e) {
+              console.error("[ChatService] Failed to save fallback message or generate title", e);
+            }
+          }
         }
       });
     }
@@ -107,6 +128,39 @@ export class ChatService {
     }
 
     // 5. Generate Answer Stream
-    return LLMService.generateAnswerStream(prompt, llmModel);
+    const rawStream = LLMService.generateAnswerStream(prompt, llmModel);
+
+    // 6. Intercept Stream to save assistant message
+    let assistantMessage = "";
+    const decoder = new TextDecoder("utf-8");
+
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        assistantMessage += decoder.decode(chunk, { stream: true });
+        controller.enqueue(chunk);
+      },
+      async flush() {
+        // Flush remaining text
+        assistantMessage += decoder.decode();
+        
+        // Save the assistant message
+        if (chatId) {
+          try {
+            await ChatRepository.saveMessage(chatId, "assistant", assistantMessage);
+            
+            // Check if chat needs a title
+            const chat = await ChatRepository.getChatById(chatId);
+            if (chat && chat.title === "New Chat") {
+              const newTitle = await LLMService.generateChatTitle(question, llmModel);
+              await ChatRepository.updateChatTitle(chatId, newTitle);
+            }
+          } catch (e) {
+            console.error("[ChatService] Failed to save assistant message or generate title", e);
+          }
+        }
+      }
+    });
+
+    return rawStream.pipeThrough(transformStream);
   }
 }

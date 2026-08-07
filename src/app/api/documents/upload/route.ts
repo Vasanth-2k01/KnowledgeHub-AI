@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth, getDbUserId } from "@/lib/auth";
 import { uploadDocumentService } from "@/services/documents/uploadDocument";
+import { apiSuccess, apiError } from "@/lib/api-response";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt", ".md"];
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
     const userId = await getDbUserId(session);
     
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized or User not found" }, { status: 401 });
+      return apiError("Unauthorized", "Unauthorized or User not found", 401);
     }
 
     // 2. Parse FormData
@@ -21,15 +22,12 @@ export async function POST(req: NextRequest) {
 
     // 3. Validation: File exists
     if (!file) {
-      return NextResponse.json({ error: "No file selected." }, { status: 400 });
+      return apiError("Bad Request", "No file selected.", 400);
     }
 
     // 4. Validation: File size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 20MB." },
-        { status: 400 }
-      );
+      return apiError("Bad Request", "File too large. Maximum size is 20MB.", 400);
     }
 
     // 5. Validation: File type
@@ -38,12 +36,10 @@ export async function POST(req: NextRequest) {
       originalFileName.endsWith(ext)
     );
     if (!isAllowed) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid file type. Only PDF, DOCX, TXT, and Markdown are allowed.",
-        },
-        { status: 400 }
+      return apiError(
+        "Bad Request",
+        "Invalid file type. Only PDF, DOCX, TXT, and Markdown are allowed.",
+        400
       );
     }
 
@@ -51,12 +47,9 @@ export async function POST(req: NextRequest) {
     const result = await uploadDocumentService(userId, file);
 
     // 7. Return success
-    return NextResponse.json(result, { status: 201 });
+    return apiSuccess(result, "Document uploaded successfully", 201);
   } catch (error: any) {
-    console.error("Upload Document API Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to upload document." },
-      { status: 500 }
-    );
+    console.error("[Upload API Error]", error);
+    return apiError(error, error.message || "Failed to upload document.", 500);
   }
 }

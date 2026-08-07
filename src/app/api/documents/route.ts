@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, getDbUserId } from "@/lib/auth";
 import connectDB from "@/config/db";
+import { apiSuccess, apiError } from "@/lib/api-response";
 import { Document } from "@/models/Document";
 
 export async function GET(req: NextRequest) {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     const userId = await getDbUserId(session);
     
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized or User not found" }, { status: 401 });
+      return apiError("Unauthorized", "Unauthorized or User not found", 401);
     }
 
     // 3. Fetch documents for the user, sorted by newest
@@ -23,13 +24,11 @@ export async function GET(req: NextRequest) {
         "_id originalFileName storedFileName fileType mimeType fileSize storagePath processingStatus chunkCount vectorCount indexedAt embeddingModel indexVersion createdAt updatedAt"
       )
       .lean();
+
     // 4. Return success
-    return NextResponse.json({ documents }, { status: 200 });
+    return apiSuccess({ documents });
   } catch (error: any) {
-    console.error("Get Documents API Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch documents." },
-      { status: 500 }
-    );
+    console.error("[GET /api/documents]", error);
+    return apiError(error, "Failed to fetch documents", 500);
   }
 }

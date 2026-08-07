@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, getDbUserId } from "@/lib/auth";
 import { SemanticSearchService } from "@/services/search/semanticSearch";
+import { apiSuccess, apiError } from "@/lib/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,14 +9,14 @@ export async function POST(req: NextRequest) {
     const userId = await getDbUserId(session);
     
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", "User not found", 401);
     }
 
     const body = await req.json();
     const { query, documentId } = body;
 
     if (!query || typeof query !== "string") {
-      return NextResponse.json({ error: "Search query is required" }, { status: 400 });
+      return apiError("Bad Request", "Search query is required", 400);
     }
 
     const searchResults = await SemanticSearchService.search(
@@ -24,12 +25,9 @@ export async function POST(req: NextRequest) {
       documentId
     );
 
-    return NextResponse.json(searchResults, { status: 200 });
+    return apiSuccess(searchResults);
   } catch (error: any) {
     console.error("Search API Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to perform search" },
-      { status: 500 }
-    );
+    return apiError(error, error.message || "Failed to perform search", 500);
   }
 }
