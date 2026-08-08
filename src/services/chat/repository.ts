@@ -72,6 +72,20 @@ export class ChatRepository {
   }
 
   /**
+   * Retrieves the most recent messages for a specific chat.
+   * Sorted descending (newest first) from the DB for efficient retrieval, 
+   * but can be reversed by the caller if chronological order is needed.
+   */
+  static async getRecentMessages(chatId: string, limit: number): Promise<IMessage[]> {
+    await connectDB();
+
+    return MessageModel.find({ chatId: new Types.ObjectId(chatId) })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+  }
+
+  /**
    * Updates the title of an existing chat.
    */
   static async updateChatTitle(chatId: string, title: string): Promise<void> {

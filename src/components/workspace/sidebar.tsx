@@ -47,7 +47,7 @@ export function Sidebar({ session }: { session: Session | null }) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [chatsExpanded, setChatsExpanded] = useState(true)
-  const { chats, isLoading } = useChatContext()
+  const { chats, isLoading, triggerNewChat } = useChatContext()
 
   return (
     <div
@@ -84,7 +84,10 @@ export function Sidebar({ session }: { session: Session | null }) {
             "w-full justify-start rounded-xl shadow-sm transition-all h-10", 
             collapsed ? "px-0 justify-center shadow-none hover:bg-zinc-200/50 dark:hover:bg-zinc-800" : "bg-blue-600 hover:bg-blue-700 text-white"
           )}
-          onClick={() => router.push('/chat')}
+          onClick={() => {
+            triggerNewChat();
+            router.push('/chat');
+          }}
         >
           <Plus className={cn("h-4 w-4 shrink-0", !collapsed && "mr-2")} />
           {!collapsed && <span>New Chat</span>}

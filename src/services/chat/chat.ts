@@ -46,7 +46,8 @@ export class ChatService {
     // 3. Prompt Building
     const chunkTexts = chunks.map(c => c.text);
     const prompt = buildRagPrompt(question, chunkTexts);
-
+    console.log("prompt : ",prompt);
+    
     // 4. Load LLM Settings
     const settings = await AppSettingsService.getSettings();
     const { llmModel } = settings.ai;
@@ -116,16 +117,43 @@ export class ChatService {
     }
 
     // 3. Prompt Building
-    const chunkTexts = chunks.map(c => c.text);
-    const prompt = buildRagPrompt(question, chunkTexts);
-
-    // 4. Load LLM Settings
+    let conversationHistory: { role: string; content: string }[] = [];
+    
+    // 3a. Retrieve Settings
     const settings = await AppSettingsService.getSettings();
     const { llmModel } = settings.ai;
-
     if (!llmModel) {
       throw new Error("LLM configuration is missing from settings.");
     }
+
+    // 3b. Conversation Memory
+    if (chatId) {
+      const chat = await ChatRepository.getChatById(chatId);
+      if (!chat) throw new Error("Chat not found");
+      if (chat.userId.toString() !== userId) throw new Error("Unauthorized access to chat");
+
+      const limit = settings.rag.conversationMemoryLimit || 10;
+      try {
+        const recentMessages = await ChatRepository.getRecentMessages(chatId, limit + 1);
+        
+        // Remove the newly saved user message if it's identical to the current query
+        if (recentMessages.length > 0 && recentMessages[0].role === "user" && recentMessages[0].content === question) {
+          recentMessages.shift();
+        }
+        
+        // Keep up to `limit` messages and reverse to chronological order
+        conversationHistory = recentMessages.slice(0, limit).reverse().map(m => ({
+          role: m.role,
+          content: m.content
+        }));
+      } catch (e) {
+        console.error("[ChatService] Failed to retrieve conversation history", e);
+        // Fallback to empty history on error, do not corrupt RAG pipeline
+      }
+    }
+
+    const chunkTexts = chunks.map(c => c.text);
+    const prompt = buildRagPrompt(question, chunkTexts, conversationHistory);
 
     // 5. Generate Answer Stream
     const rawStream = LLMService.generateAnswerStream(prompt, llmModel);
@@ -143,8 +171,8 @@ export class ChatService {
         // Flush remaining text
         assistantMessage += decoder.decode();
         
-        // Save the assistant message
-        if (chatId) {
+        // Save the assistant message if it has content
+        if (chatId && assistantMessage.trim()) {
           try {
             await ChatRepository.saveMessage(chatId, "assistant", assistantMessage);
             

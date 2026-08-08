@@ -15,6 +15,8 @@ interface ChatContextProps {
   refreshChats: () => Promise<void>;
   addChatOptimistically: (chat: ChatItem) => void;
   updateChatOptimistically: (chatId: string, updates: Partial<ChatItem>) => void;
+  newChatTrigger: number;
+  triggerNewChat: () => void;
 }
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);
@@ -22,6 +24,7 @@ const ChatContext = createContext<ChatContextProps | undefined>(undefined);
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newChatTrigger, setNewChatTrigger] = useState(0);
 
   const fetchChats = async () => {
     try {
@@ -65,6 +68,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         refreshChats: fetchChats,
         addChatOptimistically,
         updateChatOptimistically,
+        newChatTrigger,
+        triggerNewChat: () => setNewChatTrigger(prev => prev + 1),
       }}
     >
       {children}

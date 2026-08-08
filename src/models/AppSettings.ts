@@ -6,6 +6,7 @@ export interface IAppSettings extends MongooseDocument {
     chunkOverlap: number;
     topK: number;
     similarityThreshold: number;
+    conversationMemoryLimit: number;
   };
   ai: {
     embeddingProvider: string;
@@ -28,6 +29,7 @@ const appSettingsSchema = new Schema<IAppSettings>(
       chunkOverlap: { type: Number, default: 100 },
       topK: { type: Number, default: 5 },
       similarityThreshold: { type: Number, default: 0.75 },
+      conversationMemoryLimit: { type: Number, default: 10 },
     },
     ai: {
       embeddingProvider: { type: String, default: "huggingface" },

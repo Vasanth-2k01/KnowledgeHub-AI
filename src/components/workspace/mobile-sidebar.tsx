@@ -39,7 +39,7 @@ export function MobileSidebar({ session }: { session: Session | null }) {
   const [chatsExpanded, setChatsExpanded] = useState(true)
   const pathname = usePathname()
   const router = useRouter()
-  const { chats, isLoading } = useChatContext()
+  const { chats, isLoading, triggerNewChat } = useChatContext()
 
   // Close the sheet when the route changes
   useEffect(() => {
@@ -70,7 +70,11 @@ export function MobileSidebar({ session }: { session: Session | null }) {
         <div className="px-3 py-2">
           <Button 
             className="w-full justify-start rounded-xl shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition-all h-10"
-            onClick={() => { setOpen(false); router.push('/chat'); }}
+            onClick={() => { 
+              setOpen(false); 
+              triggerNewChat();
+              router.push('/chat'); 
+            }}
           >
             <Plus className="h-4 w-4 shrink-0 mr-2" />
             <span>New Chat</span>

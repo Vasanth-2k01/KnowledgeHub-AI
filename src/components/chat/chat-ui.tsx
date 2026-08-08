@@ -39,7 +39,15 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     scrollToBottom()
   }, [messages])
 
-  const { addChatOptimistically, updateChatOptimistically } = useChatContext()
+  const { addChatOptimistically, updateChatOptimistically, newChatTrigger } = useChatContext()
+
+  // Reset state when newChatTrigger fires (user clicked "New Chat")
+  useEffect(() => {
+    if (newChatTrigger > 0) {
+      setMessages([]);
+      setChatId(undefined);
+    }
+  }, [newChatTrigger]);
 
   useEffect(() => {
     setMessages(initialMessages || []);
