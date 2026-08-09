@@ -60,7 +60,7 @@ export class LLMService {
           const stream = hf.chatCompletionStream({
             model: model,
             messages: [{ role: "user", content: prompt }],
-            max_tokens: 512,
+            max_tokens: 2048,
             temperature: 0.1,
           });
 
