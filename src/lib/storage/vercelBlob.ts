@@ -1,4 +1,4 @@
-import { put, del } from '@vercel/blob';
+import { put, del, get } from '@vercel/blob';
 import path from 'path';
 import { FileStorage, StoredFile, StorageError } from './types';
 
@@ -46,21 +46,16 @@ export class VercelBlobStorage implements FileStorage {
     }
 
     try {
-      // For private Vercel Blobs, the standard URL cannot be fetched directly without the token.
-      // We must fetch it and pass the token in the headers, or use standard fetch if we construct the URL properly,
-      // but standard fetch doesn't use the SDK token automatically for reading private blobs.
-      // Wait, @vercel/blob handles private blob reading by passing the token in fetch:
-      const response = await fetch(storageKey, {
-        headers: {
-          authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
-        },
+      const result = await get(storageKey, {
+        access: 'private',
+        token: process.env.BLOB_READ_WRITE_TOKEN,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch blob, status: ${response.status}`);
+      if (!result || result.statusCode === 304 || !result.stream) {
+        throw new Error('Blob not found');
       }
 
-      const arrayBuffer = await response.arrayBuffer();
+      const arrayBuffer = await new Response(result.stream).arrayBuffer();
       return Buffer.from(arrayBuffer);
     } catch (error: any) {
       throw new StorageError(`Vercel Blob read failed: ${error.message}`, this.providerName);
