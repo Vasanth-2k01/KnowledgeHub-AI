@@ -8,6 +8,7 @@ export interface IDocument extends MongooseDocument {
   mimeType: string;
   fileSize: number;
   storagePath: string;
+  storageProvider: string;
   processingStatus: "uploaded" | "processing" | "completed" | "failed";
   indexedAt?: Date;
   chunkCount?: number;
@@ -27,6 +28,7 @@ const documentSchema = new Schema<IDocument>(
     mimeType: { type: String, required: true },
     fileSize: { type: Number, required: true },
     storagePath: { type: String, required: true },
+    storageProvider: { type: String, required: true, default: "local" },
     processingStatus: {
       type: String,
       enum: ["uploaded", "processing", "completed", "failed"],

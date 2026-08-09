@@ -4,7 +4,7 @@ import { extractText } from "@/lib/parser/parser";
 import { chunkText } from "@/lib/rag/chunker";
 import { generateEmbedding } from "@/lib/embeddings/embeddings";
 import { qdrantClient, COLLECTION_NAME, ensureCollection } from "@/lib/qdrant/client";
-import fs from "fs/promises";
+import { getFileStorage } from "@/lib/storage";
 
 export class IndexDocumentService {
   /**
@@ -31,9 +31,10 @@ export class IndexDocumentService {
       // 2. Extract Text
       let buffer: Buffer;
       try {
-        buffer = await fs.readFile(document.storagePath);
+        const storage = getFileStorage(document.storageProvider);
+        buffer = await storage.get(document.storagePath);
       } catch (err: any) {
-        throw new Error(`Failed to read file from disk: ${err.message}`);
+        throw new Error(`Failed to read file from storage: ${err.message}`);
       }
 
       const parsedData = await extractText(buffer, document.mimeType, document.fileType || "");

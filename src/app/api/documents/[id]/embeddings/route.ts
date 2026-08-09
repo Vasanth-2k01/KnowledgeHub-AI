@@ -6,7 +6,7 @@ import { extractText } from "@/lib/parser/parser";
 import { AppSettingsService } from "@/services/settings/appSettings";
 import { chunkText } from "@/lib/rag/chunker";
 import { generateEmbedding } from "@/lib/embeddings/embeddings";
-import fs from "fs/promises";
+import { getFileStorage } from "@/lib/storage";
 
 export async function POST(
   req: NextRequest,
@@ -36,7 +36,8 @@ export async function POST(
 
     let buffer;
     try {
-      buffer = await fs.readFile(document.storagePath);
+      const storage = getFileStorage(document.storageProvider);
+      buffer = await storage.get(document.storagePath);
     } catch (err: any) {
       return NextResponse.json({ error: "Missing file or unable to read" }, { status: 500 });
     }

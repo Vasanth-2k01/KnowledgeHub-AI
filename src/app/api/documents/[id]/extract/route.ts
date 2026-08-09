@@ -3,7 +3,7 @@ import { auth, getDbUserId } from "@/lib/auth";
 import connectDB from "@/config/db";
 import { Document } from "@/models/Document";
 import { extractText } from "@/lib/parser/parser";
-import fs from "fs/promises";
+import { getFileStorage } from "@/lib/storage";
 
 export async function POST(
   req: NextRequest,
@@ -37,9 +37,10 @@ export async function POST(
     // 3. Read file
     let buffer;
     try {
-      buffer = await fs.readFile(document.storagePath);
+      const storage = getFileStorage(document.storageProvider);
+      buffer = await storage.get(document.storagePath);
     } catch (err: any) {
-      console.error("Failed to read file from disk:", err);
+      console.error("Failed to read file from storage:", err);
       return NextResponse.json({ error: "Missing file or unable to read" }, { status: 500 });
     }
 

@@ -1,6 +1,6 @@
 import dbConnect from "@/config/db";
 import { Document } from "@/models/Document";
-import { saveFileLocally } from "@/lib/storage/storage";
+import { getFileStorage } from "@/lib/storage";
 import mongoose from "mongoose";
 
 export async function uploadDocumentService(
@@ -23,7 +23,8 @@ export async function uploadDocumentService(
   else if (originalFileName.toLowerCase().endsWith(".md")) fileType = "Markdown";
 
   // 3. Save file to storage
-  const { storedFileName, storagePath } = await saveFileLocally(
+  const storage = getFileStorage();
+  const { storedFileName, storagePath, storageProvider } = await storage.upload(
     userId,
     originalFileName,
     buffer
@@ -38,6 +39,7 @@ export async function uploadDocumentService(
     mimeType: file.type || "application/octet-stream",
     fileSize: file.size,
     storagePath,
+    storageProvider,
     processingStatus: "uploaded",
   });
 
