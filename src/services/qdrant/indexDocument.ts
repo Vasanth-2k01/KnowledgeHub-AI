@@ -27,6 +27,24 @@ export class IndexDocumentService {
       throw new Error("Document storage path missing");
     }
 
+    // 1.5 Clean up existing vectors in Qdrant (important for reprocessing)
+    try {
+      await qdrantClient.delete(COLLECTION_NAME, {
+        wait: true,
+        filter: {
+          must: [
+            {
+              key: "documentId",
+              match: { value: document._id.toString() }
+            }
+          ]
+        }
+      });
+      console.log(`[IndexService] Cleaned up existing vectors for document ${documentId}`);
+    } catch (e: any) {
+      console.warn(`[IndexService] Could not clean up existing vectors (might not exist yet): ${e.message}`);
+    }
+
     try {
       // 2. Extract Text
       let buffer: Buffer;

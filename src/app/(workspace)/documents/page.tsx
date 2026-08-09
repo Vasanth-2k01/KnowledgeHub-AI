@@ -11,6 +11,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { useDocuments, DocumentData } from "@/hooks/useDocuments"
 import { useDocumentIndex } from "@/hooks/useDocumentIndex"
 
@@ -22,7 +29,10 @@ export default function DocumentsPage() {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { documents, isLoading, fetchDocuments, setDocuments } = useDocuments()
+  const [docToDelete, setDocToDelete] = useState<DocumentData | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const { documents, isLoading, fetchDocuments, setDocuments, deleteDocument, downloadDocument } = useDocuments()
   const { isIndexing, indexDocument } = useDocumentIndex(documents, setDocuments, fetchDocuments)
 
   const handleUploadClick = () => {
@@ -82,6 +92,16 @@ export default function DocumentsPage() {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
     }
+  }
+
+  const handleDelete = async () => {
+    if (!docToDelete) return;
+    setIsDeleting(true);
+    const success = await deleteDocument(docToDelete._id);
+    if (success) {
+      setDocToDelete(null);
+    }
+    setIsDeleting(false);
   }
 
   const filters = ["All", "Uploaded", "Processing", "Completed", "Failed"]
@@ -368,25 +388,23 @@ export default function DocumentsPage() {
                 </div>
                 
                 <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100" />}>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100" />}>
                     <MoreVertical className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                    <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Download (Coming Soon)</DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Rename (Coming Soon)</DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Reprocess (Coming Soon)</DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => downloadDocument(doc._id, doc.originalFileName)}>Download</DropdownMenuItem>
                     {doc.processingStatus === 'failed' && (
                       <DropdownMenuItem 
                         onClick={() => indexDocument(doc._id)} 
                         disabled={isIndexing[doc._id]} 
                         className="text-blue-600 dark:text-blue-400 font-medium cursor-pointer"
                       >
-                        Retry Indexing
+                        Reprocess
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>
-                      Delete (Coming Soon)
+                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/30 dark:focus:text-red-400" onClick={() => setDocToDelete(doc)}>
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -454,25 +472,23 @@ export default function DocumentsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100" />}>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100" />}>
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                        <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Download (Coming Soon)</DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Rename (Coming Soon)</DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>Reprocess (Coming Soon)</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => downloadDocument(doc._id, doc.originalFileName)}>Download</DropdownMenuItem>
                         {doc.processingStatus === 'failed' && (
                           <DropdownMenuItem 
                             onClick={() => indexDocument(doc._id)} 
                             disabled={isIndexing[doc._id]} 
                             className="text-blue-600 dark:text-blue-400 font-medium cursor-pointer"
                           >
-                            Retry Indexing
+                            Reprocess
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-not-allowed text-zinc-400" disabled>
-                          Delete (Coming Soon)
+                        <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/30 dark:focus:text-red-400" onClick={() => setDocToDelete(doc)}>
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -484,6 +500,33 @@ export default function DocumentsPage() {
         </div>
       )}
       </div>
+
+      {/* Delete Dialog */}
+      <Dialog open={!!docToDelete} onOpenChange={(open) => !open && !isDeleting && setDocToDelete(null)}>
+        <DialogContent className="sm:max-w-[400px] w-[90%] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Delete Document</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-sm text-zinc-500 space-y-3">
+            <p>
+              Are you sure you want to completely delete <strong className="text-zinc-900 dark:text-zinc-50">{docToDelete?.originalFileName}</strong>?
+            </p>
+            <p>
+              This will permanently remove the file, its vector embeddings, and all associated metadata.
+            </p>
+            <p className="text-red-600 dark:text-red-400 font-medium">
+              This action cannot be undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDocToDelete(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

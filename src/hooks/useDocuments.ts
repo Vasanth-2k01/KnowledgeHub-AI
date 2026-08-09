@@ -44,5 +44,57 @@ export function useDocuments() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  return { documents, isLoading, error, fetchDocuments, setDocuments };
+
+  const deleteDocument = async (id: string) => {
+    try {
+      const response = await fetch(`/api/documents/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to delete document");
+      
+      setDocuments(prev => prev.filter(doc => doc._id !== id));
+      toast.success("Document deleted");
+      return true;
+    } catch (err: any) {
+      toast.error(err.message);
+      return false;
+    }
+  };
+
+  const downloadDocument = async (id: string, filename: string) => {
+    try {
+      const response = await fetch(`/api/documents/${id}/download`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to download document");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      return true;
+    } catch (err: any) {
+      toast.error(err.message);
+      return false;
+    }
+  };
+
+  return { 
+    documents, 
+    isLoading, 
+    error, 
+    fetchDocuments, 
+    setDocuments,
+    deleteDocument,
+    downloadDocument
+  };
 }
