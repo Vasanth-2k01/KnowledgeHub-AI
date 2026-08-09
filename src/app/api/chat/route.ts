@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { query, documentId, chatId, saveUserMessage = true } = body;
+    const { query, documentIds, chatId, saveUserMessage = true } = body;
 
     if (!query || typeof query !== "string") {
       return apiError("Invalid request", "Query is required", 400);
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // Call the ChatService orchestrator
-    const stream = await ChatService.handleStreamingQuery(query, userId, documentId, chatId);
+    const stream = await ChatService.handleStreamingQuery(query, userId, documentIds, chatId);
 
     return new Response(stream, {
       headers: {

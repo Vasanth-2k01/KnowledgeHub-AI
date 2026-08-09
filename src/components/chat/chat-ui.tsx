@@ -1,10 +1,26 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Send, Paperclip, FilePlus2, Library, User, Bot, Loader2 } from "lucide-react"
+import { Send, Paperclip, FilePlus2, Library, User, Bot, Loader2, X, Check, File, FileText, FileArchive, FileCode, FileType2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import TextareaAutosize from "react-textarea-autosize"
 import { useChatContext } from "@/context/ChatContext"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { useDocuments, DocumentData } from "@/hooks/useDocuments"
+import { toast } from "sonner"
+
+interface AttachedDocument {
+  id: string;
+  originalFileName: string;
+  fileType: string;
+  status: 'uploading' | 'processing' | 'ready' | 'failed';
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -28,6 +44,12 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || [])
   const [isLoading, setIsLoading] = useState(false)
   const [chatId, setChatId] = useState<string | undefined>(initialChatId)
+  
+  const [attachedDocuments, setAttachedDocuments] = useState<AttachedDocument[]>([])
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
+  const { documents, isLoading: isLoadingDocs, fetchDocuments } = useDocuments()
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
@@ -53,6 +75,146 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     setMessages(initialMessages || []);
     setChatId(initialChatId);
   }, [initialChatId, initialMessages]);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const MAX_SIZE = 20 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      toast.error("File too large. Maximum size is 20MB.")
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      return
+    }
+
+    const allowedExtensions = ['.pdf', '.docx', '.txt', '.md']
+    const isAllowed = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+    if (!isAllowed) {
+      toast.error("Invalid file type. Only PDF, DOCX, TXT, and Markdown are allowed.")
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      return
+    }
+
+    const tempId = "temp_" + Date.now().toString()
+    
+    setAttachedDocuments(prev => [
+      ...prev,
+      { id: tempId, originalFileName: file.name, fileType: file.name.split('.').pop() || '', status: 'uploading' }
+    ])
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    let createdDocumentId = "";
+
+    try {
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || "Upload failed")
+      }
+
+      createdDocumentId = data.data.documentId
+      
+      setAttachedDocuments(prev => prev.map(doc => 
+        doc.id === tempId ? { ...doc, id: createdDocumentId, status: 'processing' } : doc
+      ))
+
+      const indexRes = await fetch(`/api/documents/${createdDocumentId}/index`, {
+        method: "POST",
+      });
+
+      const indexData = await indexRes.json();
+
+      if (!indexRes.ok) {
+        throw new Error(indexData.error || "Indexing failed");
+      }
+
+      setAttachedDocuments(prev => prev.map(doc => 
+        doc.id === createdDocumentId ? { ...doc, status: 'ready' } : doc
+      ))
+
+      fetchDocuments() // Refresh library in background
+
+    } catch (error: any) {
+      console.error("Attachment error:", error)
+      toast.error(error.message || "Failed to attach document")
+      setAttachedDocuments(prev => prev.map(doc => 
+        (doc.id === tempId || doc.id === createdDocumentId) ? { ...doc, status: 'failed' } : doc
+      ))
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  const removeAttachment = (id: string) => {
+    setAttachedDocuments(prev => prev.filter(doc => doc.id !== id))
+  }
+
+  const getFileIcon = (type: string, className = "h-5 w-5", isSelected = false) => {
+    let colorClass = 'text-zinc-500'
+    let label = 'FILE'
+    let labelBg = 'bg-zinc-500 text-white'
+    
+    if (type) {
+      const t = type.toUpperCase()
+      if (t.includes('PDF')) {
+        colorClass = 'text-red-500'
+        label = 'PDF'
+        labelBg = 'bg-red-500 text-white'
+      } else if (t.includes('DOCX') || t.includes('WORD')) {
+        colorClass = 'text-blue-600'
+        label = 'DOCX'
+        labelBg = 'bg-blue-600 text-white'
+      } else if (t.includes('TXT')) {
+        colorClass = 'text-zinc-600'
+        label = 'TXT'
+        labelBg = 'bg-zinc-600 text-white'
+      } else if (t.includes('MARKDOWN') || t.includes('MD')) {
+        colorClass = 'text-emerald-600'
+        label = 'MD'
+        labelBg = 'bg-emerald-600 text-white'
+      }
+    }
+
+    const isSmall = className.includes('h-3') || className.includes('w-3')
+    
+    if (isSmall) {
+      return (
+        <div className={`relative flex items-center justify-center ${className}`}>
+          <File className={`h-full w-full ${colorClass}`} />
+        </div>
+      )
+    }
+
+    return (
+      <div className={`relative flex items-center justify-center ${className}`}>
+        <File className={`h-full w-full ${colorClass}`} strokeWidth={1.5} />
+        <div className={`absolute bottom-0 translate-y-1/4 rounded-[2px] px-[4px] py-[1px] text-[8px] font-bold tracking-wider leading-none shadow-sm ${labelBg}`}>
+          {label}
+        </div>
+      </div>
+    )
+  }
+
+  const toggleLibraryDocument = (doc: DocumentData) => {
+    setAttachedDocuments(prev => {
+      const exists = prev.find(d => d.id === doc._id)
+      if (exists) {
+        return prev.filter(d => d.id !== doc._id)
+      } else {
+        return [...prev, { id: doc._id, originalFileName: doc.originalFileName, fileType: doc.fileType, status: doc.processingStatus === 'completed' ? 'ready' : 'failed' }]
+      }
+    })
+  }
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -103,12 +265,15 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
       }
 
       // 2. Stream AI response
+      const readyDocIds = attachedDocuments.filter(d => d.status === 'ready').map(d => d.id);
+      
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           query: userMsg, 
           chatId: activeChatId,
+          documentIds: readyDocIds.length > 0 ? readyDocIds : undefined,
           saveUserMessage: !isNewChat 
         }),
       });
@@ -240,18 +405,81 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
           <div className="relative flex flex-col w-full rounded-3xl border border-zinc-200 bg-white shadow-sm transition-all focus-within:border-zinc-300 focus-within:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:focus-within:border-zinc-700">
             
             <div className="flex flex-wrap items-center gap-2 px-5 pt-4 pb-0 w-full">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center">
-                <Library className="h-3 w-3 mr-1" />
-                Sources
-              </span>
-              <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none text-[11px] px-3 transition-colors text-zinc-600 dark:text-zinc-400">
-                <FilePlus2 className="mr-1.5 h-3 w-3" />
-                Attach Files
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none text-[11px] px-3 transition-colors text-zinc-600 dark:text-zinc-400">
-                <Library className="mr-1.5 h-3 w-3" />
-                Library
-              </Button>
+              {attachedDocuments.length > 0 && (
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center">
+                  <Library className="h-3 w-3 mr-1" />
+                  Sources
+                </span>
+              )}
+              
+              {attachedDocuments.map(doc => (
+                <div key={doc.id} className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md px-2 py-1 text-xs border border-zinc-200 dark:border-zinc-700">
+                  {getFileIcon(doc.fileType, "h-3 w-3 mr-1", false)}
+                  <span className="truncate max-w-[120px] text-zinc-700 dark:text-zinc-300 mr-2" title={doc.originalFileName}>
+                    {doc.originalFileName}
+                  </span>
+                  {doc.status === 'uploading' && <Loader2 className="h-3 w-3 animate-spin text-blue-500 mr-1" />}
+                  {doc.status === 'processing' && <Loader2 className="h-3 w-3 animate-spin text-purple-500 mr-1" />}
+                  {doc.status === 'failed' && <span className="text-[10px] text-red-500 mr-1">Failed</span>}
+                  <button type="button" onClick={() => removeAttachment(doc.id)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                className="hidden" 
+                accept=".pdf,.docx,.txt,.md"
+              />
+              
+              <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
+                <DialogTrigger 
+                  render={
+                    <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none text-[11px] px-3 transition-colors text-zinc-600 dark:text-zinc-400" />
+                  }
+                >
+                  <Library className="mr-1.5 h-3 w-3" />
+                  Library
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Select Library Items</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-y-auto py-4 space-y-2">
+                    {isLoadingDocs ? (
+                      <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>
+                    ) : documents.length === 0 ? (
+                      <p className="text-sm text-center text-zinc-500">No documents found in library.</p>
+                    ) : (
+                      documents.filter(d => d.processingStatus === 'completed').map(doc => {
+                        const isSelected = attachedDocuments.some(d => d.id === doc._id)
+                        return (
+                          <div 
+                            key={doc._id} 
+                            onClick={() => toggleLibraryDocument(doc)}
+                            className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {getFileIcon(doc.fileType, "h-5 w-5 flex-shrink-0", isSelected)}
+                              <div className="flex flex-col overflow-hidden">
+                                <span className="text-sm font-medium truncate">{doc.originalFileName}</span>
+                                <span className="text-[11px] text-zinc-500">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            {isSelected && <Check className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                  <div className="flex justify-end pt-2 border-t dark:border-zinc-800">
+                    <Button onClick={() => setIsLibraryOpen(false)}>Done</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <TextareaAutosize
@@ -270,7 +498,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
             />
             
             <div className="flex items-center justify-between px-4 pb-4">
-              <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 rounded-full hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors">
+              <Button type="button" onClick={handleUploadClick} variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 rounded-full hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors">
                 <Paperclip className="h-4 w-4" />
                 <span className="sr-only">Attach file</span>
               </Button>

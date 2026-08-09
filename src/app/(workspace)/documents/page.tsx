@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from "react"
 import { toast } from "sonner"
-import { Upload, Search, LayoutGrid, List, FileText, MoreVertical, FileArchive, FileImage, FileBarChart, Loader2, File } from "lucide-react"
+import { Upload, Search, LayoutGrid, List, FileText, MoreVertical, FileArchive, FileImage, FileBarChart, Loader2, File, FileCode, FileType2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -114,12 +114,40 @@ export default function DocumentsPage() {
     return result
   }, [documents, search, filter, sort])
 
-  const getFileIcon = (type: string) => {
-    const t = type.toUpperCase()
-    if (t.includes('PDF')) return <FileText className="h-5 w-5" />
-    if (t.includes('DOCX') || t.includes('WORD')) return <FileText className="h-5 w-5" />
-    if (t.includes('TXT') || t.includes('MARKDOWN')) return <FileText className="h-5 w-5" />
-    return <FileArchive className="h-5 w-5" />
+  const getFileIcon = (type: string, className = "h-5 w-5") => {
+    let colorClass = 'text-zinc-500'
+    let label = 'FILE'
+    let labelBg = 'bg-zinc-500 text-white'
+    
+    if (type) {
+      const t = type.toUpperCase()
+      if (t.includes('PDF')) {
+        colorClass = 'text-red-500'
+        label = 'PDF'
+        labelBg = 'bg-red-500 text-white'
+      } else if (t.includes('DOCX') || t.includes('WORD')) {
+        colorClass = 'text-blue-600'
+        label = 'DOCX'
+        labelBg = 'bg-blue-600 text-white'
+      } else if (t.includes('TXT')) {
+        colorClass = 'text-zinc-600'
+        label = 'TXT'
+        labelBg = 'bg-zinc-600 text-white'
+      } else if (t.includes('MARKDOWN') || t.includes('MD')) {
+        colorClass = 'text-emerald-600'
+        label = 'MD'
+        labelBg = 'bg-emerald-600 text-white'
+      }
+    }
+
+    return (
+      <div className={`relative flex items-center justify-center ${className}`}>
+        <File className={`h-full w-full ${colorClass}`} strokeWidth={1.5} />
+        <div className={`absolute bottom-0 translate-y-1/4 rounded-[2px] px-[4px] py-[1px] text-[8px] font-bold tracking-wider leading-none shadow-sm ${labelBg}`}>
+          {label}
+        </div>
+      </div>
+    )
   }
 
   const getStatusColor = (status: string) => {
@@ -159,7 +187,7 @@ export default function DocumentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Documents
+            Library
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">
             Manage and view your uploaded knowledge files.

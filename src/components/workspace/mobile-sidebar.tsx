@@ -27,7 +27,7 @@ import { useChatContext } from "@/context/ChatContext"
 
 const bottomRoutes = [
   {
-    label: "Documents",
+    label: "Library",
     icon: FileText,
     href: "/documents",
   },

@@ -23,12 +23,12 @@ export class ChatService {
   static async handleQuery(
     question: string,
     userId: string,
-    documentId?: string
+    documentIds?: string[]
   ): Promise<ChatResponse> {
     
     // 1. Semantic Search (Retrieval)
     const tSearchStart = Date.now();
-    const searchResponse = await SemanticSearchService.search(question, userId, documentId);
+    const searchResponse = await SemanticSearchService.search(question, userId, documentIds);
     const searchTime = Date.now() - tSearchStart;
     
     const chunks = searchResponse.results;
@@ -79,12 +79,12 @@ export class ChatService {
   static async handleStreamingQuery(
     question: string,
     userId: string,
-    documentId?: string,
+    documentIds?: string[],
     chatId?: string
   ): Promise<ReadableStream> {
     
     // 1. Semantic Search (Retrieval)
-    const searchResponse = await SemanticSearchService.search(question, userId, documentId);
+    const searchResponse = await SemanticSearchService.search(question, userId, documentIds);
     const chunks = searchResponse.results;
 
     // 2. Handle "no context found"

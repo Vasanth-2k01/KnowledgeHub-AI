@@ -22,7 +22,7 @@ export class SemanticSearchService {
   static async search(
     query: string,
     userId: string,
-    documentId?: string
+    documentIds?: string[]
   ): Promise<{
     query: string;
     searchedDocuments: string;
@@ -59,11 +59,11 @@ export class SemanticSearchService {
       }
     ];
 
-    // If a specific document is requested, add it to the filter
-    if (documentId) {
+    // If specific documents are requested, add them to the filter
+    if (documentIds && documentIds.length > 0) {
       mustFilters.push({
         key: "documentId",
-        match: { value: documentId },
+        match: { any: documentIds },
       });
     }
 
@@ -99,7 +99,7 @@ export class SemanticSearchService {
 
     // 6. Logging
     console.log(`[SemanticSearch] Query: "${query}"`);
-    console.log(`[SemanticSearch] Scope: ${documentId ? `Document ${documentId}` : "All Documents"}`);
+    console.log(`[SemanticSearch] Scope: ${documentIds && documentIds.length > 0 ? `Documents: ${documentIds.join(', ')}` : "All Documents"}`);
     console.log(`[SemanticSearch] Total Results: ${results.length} (Threshold: ${similarityThreshold})`);
     console.log(`[SemanticSearch] Embedding Time: ${tEmbeddingEnd - tEmbeddingStart}ms`);
     console.log(`[SemanticSearch] Qdrant Search Time: ${tQdrantEnd - tQdrantStart}ms`);
@@ -107,7 +107,7 @@ export class SemanticSearchService {
 
     return {
       query,
-      searchedDocuments: documentId ? "1" : "All",
+      searchedDocuments: documentIds && documentIds.length > 0 ? documentIds.length.toString() : "All",
       totalResults: results.length,
       topK,
       results,

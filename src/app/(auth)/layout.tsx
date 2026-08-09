@@ -42,7 +42,7 @@ export default function AuthLayout({
               {[
                 'AI Powered Semantic Search',
                 'Secure Authentication',
-                'Chat with Documents',
+                'Chat with Library',
                 'Team Collaboration',
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-zinc-300">

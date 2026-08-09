@@ -109,7 +109,7 @@ export default function SearchPage() {
             onChange={(e) => setSelectedDocument(e.target.value)}
             className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 transition-all cursor-pointer"
           >
-            <option value="">All Documents</option>
+            <option value="">Entire Library</option>
             {indexedDocuments.map(doc => (
               <option key={doc._id} value={doc._id}>
                 {doc.originalFileName}
