@@ -60,7 +60,7 @@ export default function SearchPage() {
         throw new Error(data.error || "Search failed")
       }
 
-      setResponse(data)
+      setResponse(data.data)
     } catch (error: any) {
       console.error("Search error:", error)
       toast.error(error.message || "Failed to perform semantic search")

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const searchResults = await SemanticSearchService.search(
       query,
       userId,
-      documentId
+      documentId ? (Array.isArray(documentId) ? documentId : [documentId]) : undefined
     );
 
     return apiSuccess(searchResults);

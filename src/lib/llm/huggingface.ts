@@ -66,6 +66,7 @@ export class LLMService {
 
           let isFirstChunk = true;
           const encoder = new TextEncoder();
+          let finishReason: string | null = null;
 
           for await (const chunk of stream) {
             let content = chunk.choices?.[0]?.delta?.content ?? "";
@@ -80,7 +81,20 @@ export class LLMService {
             if (content) {
               controller.enqueue(encoder.encode(content));
             }
+
+            const reason = chunk.choices?.[0]?.finish_reason;
+
+            if (reason) {
+              finishReason = reason;
+            }
           }
+
+          console.log("[LLM] Finish reason:", finishReason);
+
+          if (finishReason === "length") {
+            console.warn("[LLM] ⚠️ Response was truncated because max_tokens was reached.");
+          }
+
           controller.close();
         } catch (error: any) {
           console.error(`[LLMService] Error streaming answer with model ${model}:`, error);
@@ -136,7 +150,7 @@ Title:`;
 
       // Clean up any quotes or punctuation just in case the LLM ignored instructions
       title = title.replace(/^["']|["']$/g, '').replace(/[.!?]$/, '');
-      
+
       // Limit to max 6 words manually if the LLM hallucinated
       const words = title.split(/\s+/);
       if (words.length > 6) {

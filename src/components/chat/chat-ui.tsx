@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { useDocuments, DocumentData } from "@/hooks/useDocuments"
 import { toast } from "sonner"
+import { MarkdownRenderer } from "./MarkdownRenderer"
 
 interface AttachedDocument {
   id: string;
@@ -341,7 +342,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     <div className="flex flex-1 flex-col h-full overflow-hidden relative animate-in fade-in zoom-in-95 duration-500">
       {/* Scrollable Chat Area */}
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="flex w-full max-w-3xl flex-col mx-auto min-h-full p-4 sm:p-8 pb-32 sm:pb-40 pt-10 sm:pt-20">
+        <div className="flex w-full max-w-4xl flex-col mx-auto min-h-full p-4 sm:p-8 pb-32 sm:pb-40 pt-10 sm:pt-20">
         {/* Welcome Section */}
         {messages.length === 0 && (
           <div className="text-center space-y-3 max-w-xl mx-auto mb-10">
@@ -356,7 +357,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
 
         {/* Chat History */}
         {messages.length > 0 && (
-          <div className="w-full max-w-3xl space-y-6 mb-10">
+          <div className="w-full max-w-4xl space-y-6 mb-10">
             {messages.map((msg, index) => (
               <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
@@ -365,12 +366,16 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                   </div>
                 )}
                 
-                <div className={`px-5 py-3.5 rounded-2xl max-w-[85%] text-[15px] leading-relaxed ${
+                <div className={`px-5 py-3.5 rounded-2xl text-[15px] overflow-x-auto ${
                   msg.role === 'user' 
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm' 
-                    : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm'
+                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm max-w-[85%] leading-relaxed' 
+                    : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm w-full sm:max-w-[850px] leading-[1.6]'
                 }`}>
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === 'user' ? (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ) : (
+                    <MarkdownRenderer content={msg.content} />
+                  )}
                 </div>
 
                 {msg.role === 'user' && (
@@ -401,7 +406,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
 
       {/* Fixed Input Area */}
       <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 sm:px-8 sm:pb-8 pt-4 bg-gradient-to-t from-white via-white to-transparent dark:from-zinc-950 dark:via-zinc-950 dark:to-transparent">
-        <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto">
+        <form onSubmit={handleSubmit} className="w-full relative group max-w-4xl mx-auto">
           <div className="relative flex flex-col w-full rounded-3xl border border-zinc-200 bg-white shadow-sm transition-all focus-within:border-zinc-300 focus-within:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:focus-within:border-zinc-700">
             
             <div className="flex flex-wrap items-center gap-2 px-5 pt-4 pb-0 w-full">
