@@ -1,4 +1,4 @@
-import { SemanticSearchService, SemanticSearchResult } from "@/services/search/semanticSearch";
+import { SemanticSearchService, SemanticSearchResult, CitationSource } from "@/services/search/semanticSearch";
 import { buildRagPrompt } from "@/lib/rag/promptBuilder";
 import { LLMService } from "@/lib/llm/huggingface";
 import { AppSettingsService } from "@/services/settings/appSettings";
@@ -6,7 +6,7 @@ import { ChatRepository } from "@/services/chat/repository";
 
 export interface ChatResponse {
   answer: string;
-  sources: SemanticSearchResult[];
+  sources: CitationSource[];
   searchTime: number;
   totalChunks: number;
 }
@@ -44,8 +44,16 @@ export class ChatService {
     }
 
     // 3. Prompt Building
-    const chunkTexts = chunks.map(c => c.text);
-    const prompt = buildRagPrompt(question, chunkTexts);
+    const sources: CitationSource[] = chunks.map((chunk, index) => ({
+      id: `SOURCE_${index + 1}`,
+      documentId: chunk.documentId,
+      fileName: chunk.originalFileName,
+      chunkIndex: chunk.chunkIndex,
+      content: chunk.text,
+      score: chunk.similarityScore
+    }));
+    
+    const prompt = buildRagPrompt(question, sources);
     console.log("prompt : ",prompt);
     
     // 4. Load LLM Settings
@@ -62,9 +70,9 @@ export class ChatService {
     // 6. Return standard response
     return {
       answer,
-      sources: chunks,
+      sources,
       searchTime,
-      totalChunks: chunks.length,
+      totalChunks: sources.length,
     };
   }
 
@@ -81,7 +89,7 @@ export class ChatService {
     userId: string,
     documentIds?: string[],
     chatId?: string
-  ): Promise<ReadableStream> {
+  ): Promise<{ stream: ReadableStream; sources: CitationSource[] }> {
     
     // 1. Semantic Search (Retrieval)
     const searchResponse = await SemanticSearchService.search(question, userId, documentIds);
@@ -90,7 +98,7 @@ export class ChatService {
     // 2. Handle "no context found"
     if (!chunks || chunks.length === 0) {
       const fallbackMsg = "I couldn't find any relevant information in the uploaded documents.";
-      return new ReadableStream({
+      const stream = new ReadableStream({
         async start(controller) {
           controller.enqueue(new TextEncoder().encode(fallbackMsg));
           controller.close();
@@ -114,6 +122,7 @@ export class ChatService {
           }
         }
       });
+      return { stream, sources: [] };
     }
 
     // 3. Prompt Building
@@ -152,8 +161,21 @@ export class ChatService {
       }
     }
 
-    const chunkTexts = chunks.map(c => c.text);
-    const prompt = buildRagPrompt(question, chunkTexts, conversationHistory);
+    const sources: CitationSource[] = chunks.map((chunk, index) => ({
+      id: `SOURCE_${index + 1}`,
+      documentId: chunk.documentId,
+      fileName: chunk.originalFileName,
+      chunkIndex: chunk.chunkIndex,
+      content: chunk.text,
+      score: chunk.similarityScore
+    }));
+    
+    console.log(`[RAG] Retrieved ${sources.length} sources.`);
+    sources.forEach(s => {
+      console.log(`[RAG] ${s.id} -> ${s.fileName} / Chunk #${s.chunkIndex}`);
+    });
+
+    const prompt = buildRagPrompt(question, sources, conversationHistory);
 
     // 5. Generate Answer Stream
     const rawStream = LLMService.generateAnswerStream(prompt, llmModel);
@@ -174,7 +196,15 @@ export class ChatService {
         // Save the assistant message if it has content
         if (chatId && assistantMessage.trim()) {
           try {
-            await ChatRepository.saveMessage(chatId, "assistant", assistantMessage);
+            // Filter sources based on final assistantMessage to only save the used ones
+            const usedSources = sources.filter(s => {
+              const indexMatch = s.id.match(/^SOURCE_(\d+)$/);
+              if (!indexMatch) return false;
+              const regex = new RegExp(`\\[SOURCE_${indexMatch[1]}\\]`);
+              return regex.test(assistantMessage);
+            });
+
+            await ChatRepository.saveMessage(chatId, "assistant", assistantMessage, usedSources);
             
             // Check if chat needs a title
             const chat = await ChatRepository.getChatById(chatId);
@@ -189,6 +219,6 @@ export class ChatService {
       }
     });
 
-    return rawStream.pipeThrough(transformStream);
+    return { stream: rawStream.pipeThrough(transformStream), sources };
   }
 }

@@ -28,7 +28,7 @@ const appSettingsSchema = new Schema<IAppSettings>(
       chunkSize: { type: Number, default: 500 },
       chunkOverlap: { type: Number, default: 100 },
       topK: { type: Number, default: 5 },
-      similarityThreshold: { type: Number, default: 0.75 },
+      similarityThreshold: { type: Number, default: 0.50 },
       conversationMemoryLimit: { type: Number, default: 10 },
     },
     ai: {

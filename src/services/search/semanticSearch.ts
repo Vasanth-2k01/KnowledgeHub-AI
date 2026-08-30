@@ -10,6 +10,15 @@ export interface SemanticSearchResult {
   similarityScore: number;
 }
 
+export interface CitationSource {
+  id: string;
+  documentId: string;
+  fileName: string;
+  chunkIndex?: number;
+  content: string;
+  score?: number;
+}
+
 export class SemanticSearchService {
   /**
    * Performs a semantic search against the indexed vectors in Qdrant.

@@ -1,15 +1,12 @@
-import NextAuth from 'next-auth';
-import { authConfig } from '@/lib/auth.config';
 import { NextResponse } from 'next/server';
-
-const { auth } = NextAuth(authConfig);
+import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/chat', '/documents', '/shared', '/workspaces', '/profile', '/settings'];
 const authRoutes = ['/login', '/register'];
 
-export default auth((req) => {
+export default function proxy(req: NextRequest) {
   const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = req.cookies.has('authjs.session-token') || req.cookies.has('__Secure-authjs.session-token');
 
   const isProtectedRoute = protectedRoutes.some((route) => nextUrl.pathname.startsWith(route));
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
@@ -26,7 +23,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],

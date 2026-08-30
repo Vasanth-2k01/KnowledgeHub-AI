@@ -4,6 +4,9 @@ import { ChatService } from "@/services/chat/chat";
 import { ChatRepository } from "@/services/chat/repository";
 import { apiError } from "@/lib/api-response";
 
+export const maxDuration = 60; // Max allowed for Hobby plan to prevent stream from dropping
+
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -27,12 +30,45 @@ export async function POST(req: Request) {
     }
 
     // Call the ChatService orchestrator
-    const stream = await ChatService.handleStreamingQuery(query, userId, documentIds, chatId);
+    const { stream, sources } = await ChatService.handleStreamingQuery(query, userId, documentIds, chatId);
 
-    return new Response(stream, {
+    const encoder = new TextEncoder();
+    let fullText = "";
+
+    const sseStream = new TransformStream({
+      start(controller) {
+        // We no longer send sources at the start.
+      },
+      transform(chunk, controller) {
+        const text = new TextDecoder("utf-8").decode(chunk, { stream: true });
+        fullText += text;
+        controller.enqueue(encoder.encode(`event: token\ndata: ${JSON.stringify(text)}\n\n`));
+      },
+      flush(controller) {
+        // Flush remaining text
+        fullText += new TextDecoder("utf-8").decode();
+        
+        if (sources && sources.length > 0) {
+          // Filter sources based on fullText
+          const usedSources = sources.filter(s => {
+            const indexMatch = s.id.match(/^SOURCE_(\d+)$/);
+            if (!indexMatch) return false;
+            const regex = new RegExp(`\\[SOURCE_${indexMatch[1]}\\]`);
+            return regex.test(fullText);
+          });
+          
+          if (usedSources.length > 0) {
+            controller.enqueue(encoder.encode(`event: sources\ndata: ${JSON.stringify(usedSources)}\n\n`));
+          }
+        }
+      }
+    });
+
+    return new Response(stream.pipeThrough(sseStream), {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
       },
     });
   } catch (error: any) {

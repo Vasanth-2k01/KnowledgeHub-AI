@@ -29,6 +29,7 @@ export default async function ChatDetailPage({
     const messages = rawMessages.map(msg => ({
       role: msg.role as "user" | "assistant",
       content: msg.content,
+      citations: msg.citations || undefined,
     }));
 
     return (

@@ -15,6 +15,8 @@ import {
 import { useDocuments, DocumentData } from "@/hooks/useDocuments"
 import { toast } from "sonner"
 import { MarkdownRenderer } from "./MarkdownRenderer"
+import { CitationSidebar } from "./CitationSidebar"
+import { CitationSource } from "@/services/search/semanticSearch"
 
 interface AttachedDocument {
   id: string;
@@ -26,6 +28,7 @@ interface AttachedDocument {
 interface Message {
   role: "user" | "assistant";
   content: string;
+  citations?: CitationSource[];
 }
 
 const SUGGESTED_PROMPTS = [
@@ -46,6 +49,16 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [chatId, setChatId] = useState<string | undefined>(initialChatId)
   
+  const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false)
+  const [activeCitations, setActiveCitations] = useState<CitationSource[]>([])
+  const [activeCitationId, setActiveCitationId] = useState<string | null>(null)
+  
+  const handleCitationClick = (citationId: string, citations: CitationSource[]) => {
+    setActiveCitations(citations);
+    setActiveCitationId(citationId);
+    setIsCitationSidebarOpen(true);
+  }
+  
   const [attachedDocuments, setAttachedDocuments] = useState<AttachedDocument[]>([])
   const [isLibraryOpen, setIsLibraryOpen] = useState(false)
   const { documents, isLoading: isLoadingDocs, fetchDocuments } = useDocuments()
@@ -55,7 +68,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    messagesEndRef.current?.scrollIntoView({ behavior: isLoading ? "auto" : "smooth" })
   }
 
   useEffect(() => {
@@ -69,6 +82,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     if (newChatTrigger > 0) {
       setMessages([]);
       setChatId(undefined);
+      setIsCitationSidebarOpen(false);
     }
   }, [newChatTrigger]);
 
@@ -219,7 +233,9 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!prompt.trim() || isLoading) return;
+    
+    const isUploading = attachedDocuments.some(doc => doc.status === 'uploading' || doc.status === 'processing');
+    if (!prompt.trim() || isLoading || isUploading) return;
 
     const userMsg = prompt.trim();
     setPrompt("");
@@ -291,19 +307,52 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
       
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
       let currentAssistantMessage = "";
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        currentAssistantMessage += chunk;
+        buffer += decoder.decode(value, { stream: true });
         
-        setMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1].content = currentAssistantMessage;
-          return newMessages;
-        });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ''; // Keep the incomplete event in the buffer
+
+        for (const event of events) {
+          const lines = event.split('\n');
+          if (lines[0] === 'event: sources' && lines[1]?.startsWith('data: ')) {
+            const data = lines[1].substring(6);
+            try {
+              const sources = JSON.parse(data);
+              // Sort sources numerically by SOURCE_X index
+              sources.sort((a: CitationSource, b: CitationSource) => {
+                const aMatch = a.id.match(/^SOURCE_(\d+)$/);
+                const bMatch = b.id.match(/^SOURCE_(\d+)$/);
+                if (aMatch && bMatch) return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+                return 0;
+              });
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1].citations = sources;
+                return newMessages;
+              });
+            } catch (e) {
+              console.error("Failed to parse sources", e);
+            }
+          } else if (lines[0] === 'event: token' && lines[1]?.startsWith('data: ')) {
+            const data = lines[1].substring(6);
+            try {
+              currentAssistantMessage += JSON.parse(data);
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1].content = currentAssistantMessage;
+                return newMessages;
+              });
+            } catch (e) {
+              console.error("Failed to parse token data", e);
+            }
+          }
+        }
       }
       
       // 3. Background update title if this is a new chat
@@ -342,7 +391,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     <div className="flex flex-1 flex-col h-full overflow-hidden relative animate-in fade-in zoom-in-95 duration-500">
       {/* Scrollable Chat Area */}
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="flex w-full max-w-4xl flex-col mx-auto min-h-full p-4 sm:p-8 pb-32 sm:pb-40 pt-10 sm:pt-20">
+        <div className="flex w-full max-w-4xl flex-col mx-auto min-h-full p-4 sm:p-8 pb-24 sm:pb-28 pt-10 sm:pt-20">
         {/* Welcome Section */}
         {messages.length === 0 && (
           <div className="text-center space-y-3 max-w-xl mx-auto mb-10">
@@ -357,8 +406,11 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
 
         {/* Chat History */}
         {messages.length > 0 && (
-          <div className="w-full max-w-4xl space-y-6 mb-10">
-            {messages.map((msg, index) => (
+          <div className="w-full max-w-4xl space-y-6 mb-6">
+            {messages.map((msg, index) => {
+              if (msg.role === 'assistant' && msg.content === "") return null;
+              
+              return (
               <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -366,15 +418,33 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                   </div>
                 )}
                 
-                <div className={`px-5 py-3.5 rounded-2xl text-[15px] overflow-x-auto ${
-                  msg.role === 'user' 
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm max-w-[85%] leading-relaxed' 
-                    : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm w-full sm:max-w-[850px] leading-[1.6]'
-                }`}>
-                  {msg.role === 'user' ? (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  ) : (
-                    <MarkdownRenderer content={msg.content} />
+                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'max-w-[85%]' : 'w-full sm:max-w-[850px]'}`}>
+                  <div className={`px-5 py-3.5 rounded-2xl text-[15px] ${
+                    msg.role === 'user' 
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm leading-relaxed' 
+                      : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm leading-[1.6]'
+                  }`}>
+                    {msg.role === 'user' ? (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    ) : (
+                      <MarkdownRenderer 
+                        content={msg.content} 
+                        citations={msg.citations}
+                        onCitationClick={(id) => handleCitationClick(id, msg.citations || [])}
+                      />
+                    )}
+                  </div>
+                  
+                  {msg.role === 'assistant' && msg.citations && msg.citations.length > 0 && (
+                    <div className="flex mt-1">
+                      <button 
+                        onClick={() => handleCitationClick(msg.citations![0].id, msg.citations!)}
+                        className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                      >
+                        <span className="text-[13px] leading-none mb-[1px]">ⓘ</span>
+                        <span>Answer based on {msg.citations.length} source{msg.citations.length === 1 ? '' : 's'}</span>
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -384,9 +454,9 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                   </div>
                 )}
               </div>
-            ))}
+            )})}
             
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (
+            {isLoading && (messages[messages.length - 1]?.role === 'user' || (messages[messages.length - 1]?.role === 'assistant' && messages[messages.length - 1]?.content === "")) && (
               <div className="flex gap-4 justify-start">
                 <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Bot className="h-5 w-5" />
@@ -409,110 +479,116 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         <form onSubmit={handleSubmit} className="w-full relative group max-w-4xl mx-auto">
           <div className="relative flex flex-col w-full rounded-3xl border border-zinc-200 bg-white shadow-sm transition-all focus-within:border-zinc-300 focus-within:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:focus-within:border-zinc-700">
             
-            <div className="flex flex-wrap items-center gap-2 px-5 pt-4 pb-0 w-full">
-              {attachedDocuments.length > 0 && (
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center">
+            {attachedDocuments.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 px-4 pt-3 pb-1 w-full border-b border-zinc-100 dark:border-zinc-800/50">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center">
                   <Library className="h-3 w-3 mr-1" />
                   Sources
                 </span>
-              )}
-              
-              {attachedDocuments.map(doc => (
-                <div key={doc.id} className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md px-2 py-1 text-xs border border-zinc-200 dark:border-zinc-700">
-                  {getFileIcon(doc.fileType, "h-3 w-3 mr-1", false)}
-                  <span className="truncate max-w-[120px] text-zinc-700 dark:text-zinc-300 mr-2" title={doc.originalFileName}>
-                    {doc.originalFileName}
-                  </span>
-                  {doc.status === 'uploading' && <Loader2 className="h-3 w-3 animate-spin text-blue-500 mr-1" />}
-                  {doc.status === 'processing' && <Loader2 className="h-3 w-3 animate-spin text-purple-500 mr-1" />}
-                  {doc.status === 'failed' && <span className="text-[10px] text-red-500 mr-1">Failed</span>}
-                  <button type="button" onClick={() => removeAttachment(doc.id)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                accept=".pdf,.docx,.txt,.md"
+                
+                {attachedDocuments.map(doc => (
+                  <div key={doc.id} className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md px-2 py-1 text-xs border border-zinc-200 dark:border-zinc-700">
+                    {getFileIcon(doc.fileType, "h-3 w-3 mr-1", false)}
+                    <span className="truncate max-w-[120px] text-zinc-700 dark:text-zinc-300 mr-2" title={doc.originalFileName}>
+                      {doc.originalFileName}
+                    </span>
+                    {doc.status === 'uploading' && <Loader2 className="h-3 w-3 animate-spin text-blue-500 mr-1" />}
+                    {doc.status === 'processing' && <Loader2 className="h-3 w-3 animate-spin text-purple-500 mr-1" />}
+                    {doc.status === 'failed' && <span className="text-[10px] text-red-500 mr-1">Failed</span>}
+                    <button type="button" onClick={() => removeAttachment(doc.id)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Input Row */}
+            <div className="flex items-end gap-2 px-3 py-2 w-full">
+              {/* Left Action Buttons */}
+              <div className="flex items-center gap-1 pb-1">
+                <Button type="button" onClick={handleUploadClick} variant="ghost" size="icon" title="Attach file" className="h-8 w-8 text-zinc-500 rounded-full hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors shrink-0">
+                  <Paperclip className="h-4 w-4" />
+                  <span className="sr-only">Attach file</span>
+                </Button>
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  className="hidden" 
+                  accept=".pdf,.docx,.txt,.md"
+                />
+                
+                <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
+                  <DialogTrigger render={
+                    <Button type="button" variant="ghost" size="icon" title="Open library" className="h-8 w-8 text-zinc-500 rounded-full hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors shrink-0" />
+                  }>
+                    <Library className="h-4 w-4" />
+                    <span className="sr-only">Library</span>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>Select Library Items</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto py-4 space-y-2">
+                      {isLoadingDocs ? (
+                        <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>
+                      ) : documents.length === 0 ? (
+                        <p className="text-sm text-center text-zinc-500">No documents found in library.</p>
+                      ) : (
+                        documents.filter(d => d.processingStatus === 'completed').map(doc => {
+                          const isSelected = attachedDocuments.some(d => d.id === doc._id)
+                          return (
+                            <div 
+                              key={doc._id} 
+                              onClick={() => toggleLibraryDocument(doc)}
+                              className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {getFileIcon(doc.fileType, "h-5 w-5 flex-shrink-0", isSelected)}
+                                <div className="flex flex-col overflow-hidden">
+                                  <span className="text-sm font-medium truncate">{doc.originalFileName}</span>
+                                  <span className="text-[11px] text-zinc-500">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                    <div className="flex justify-end pt-2 border-t dark:border-zinc-800">
+                      <Button onClick={() => setIsLibraryOpen(false)}>Done</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Text Area */}
+              <TextareaAutosize
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                placeholder="Message KnowledgeHub AI..."
+                className="max-h-[300px] flex-1 resize-none overflow-hidden bg-transparent py-2.5 text-[15px] leading-relaxed text-zinc-900 placeholder:text-zinc-500 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 self-center"
+                maxRows={10}
+                disabled={isLoading}
               />
               
-              <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
-                <DialogTrigger 
-                  render={
-                    <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none text-[11px] px-3 transition-colors text-zinc-600 dark:text-zinc-400" />
-                  }
-                >
-                  <Library className="mr-1.5 h-3 w-3" />
-                  Library
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
-                  <DialogHeader>
-                    <DialogTitle>Select Library Items</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex-1 overflow-y-auto py-4 space-y-2">
-                    {isLoadingDocs ? (
-                      <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>
-                    ) : documents.length === 0 ? (
-                      <p className="text-sm text-center text-zinc-500">No documents found in library.</p>
-                    ) : (
-                      documents.filter(d => d.processingStatus === 'completed').map(doc => {
-                        const isSelected = attachedDocuments.some(d => d.id === doc._id)
-                        return (
-                          <div 
-                            key={doc._id} 
-                            onClick={() => toggleLibraryDocument(doc)}
-                            className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {getFileIcon(doc.fileType, "h-5 w-5 flex-shrink-0", isSelected)}
-                              <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-medium truncate">{doc.originalFileName}</span>
-                                <span className="text-[11px] text-zinc-500">{new Date(doc.createdAt).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            {isSelected && <Check className="h-4 w-4 text-blue-500 flex-shrink-0" />}
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                  <div className="flex justify-end pt-2 border-t dark:border-zinc-800">
-                    <Button onClick={() => setIsLibraryOpen(false)}>Done</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <TextareaAutosize
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              placeholder="Message KnowledgeHub AI..."
-              className="max-h-[300px] w-full resize-none overflow-hidden bg-transparent px-5 py-4 pr-16 text-[15px] leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
-              maxRows={10}
-              disabled={isLoading}
-            />
-            
-            <div className="flex items-center justify-between px-4 pb-4">
-              <Button type="button" onClick={handleUploadClick} variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 rounded-full hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors">
-                <Paperclip className="h-4 w-4" />
-                <span className="sr-only">Attach file</span>
-              </Button>
-              <div className="absolute right-4 bottom-4">
+              {/* Send Button */}
+              <div className="pb-1 shrink-0">
                 <Button 
                   type="submit"
                   size="icon" 
-                  className="h-9 w-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white transition-all disabled:opacity-30 disabled:bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white dark:disabled:bg-zinc-100"
-                  disabled={!prompt.trim() || isLoading}
+                  title="Send message"
+                  className="h-8 w-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white transition-all disabled:opacity-30 disabled:bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white dark:disabled:bg-zinc-100"
+                  disabled={!prompt.trim() || isLoading || attachedDocuments.some(doc => doc.status === 'uploading' || doc.status === 'processing')}
                 >
                   <Send className="h-4 w-4" />
                   <span className="sr-only">Send message</span>
@@ -539,6 +615,13 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         )}
         
       </div>
+      
+      <CitationSidebar 
+        isOpen={isCitationSidebarOpen}
+        onClose={() => setIsCitationSidebarOpen(false)}
+        citations={activeCitations}
+        activeCitationId={activeCitationId}
+      />
     </div>
   )
 }

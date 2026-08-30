@@ -24,7 +24,8 @@ export class ChatRepository {
   static async saveMessage(
     chatId: string,
     role: "user" | "assistant",
-    content: string
+    content: string,
+    citations?: any[]
   ): Promise<IMessage> {
     await connectDB();
 
@@ -32,6 +33,7 @@ export class ChatRepository {
       chatId: new Types.ObjectId(chatId),
       role,
       content,
+      ...(citations && { citations }),
     });
 
     await ChatModel.findByIdAndUpdate(chatId, {
