@@ -435,6 +435,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                     )}
                   </div>
                   
+                  {/* Temporarily disabled citation functionality
                   {msg.role === 'assistant' && msg.citations && msg.citations.length > 0 && (
                     <div className="flex mt-1">
                       <button 
@@ -446,6 +447,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                       </button>
                     </div>
                   )}
+                  */}
                 </div>
 
                 {msg.role === 'user' && (
@@ -616,12 +618,14 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         
       </div>
       
+      {/* Temporarily disabled citation sidebar
       <CitationSidebar 
         isOpen={isCitationSidebarOpen}
         onClose={() => setIsCitationSidebarOpen(false)}
         citations={activeCitations}
         activeCitationId={activeCitationId}
       />
+      */}
     </div>
   )
 }

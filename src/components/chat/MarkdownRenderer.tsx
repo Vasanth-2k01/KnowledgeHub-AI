@@ -136,6 +136,9 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 export function MarkdownRenderer({ content, citations, onCitationClick }: MarkdownRendererProps) {
+  // Temporary disable: strip out all citation markers from the text
+  const strippedContent = content.replace(/\[SOURCE_\d+\]/g, "");
+
   const components: Components = {
     // Headings
     h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-zinc-900 dark:text-zinc-100" {...props} />,
@@ -228,7 +231,7 @@ export function MarkdownRenderer({ content, citations, onCitationClick }: Markdo
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
       >
-        {content}
+        {strippedContent}
       </ReactMarkdown>
     </div>
   );
