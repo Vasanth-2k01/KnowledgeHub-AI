@@ -417,20 +417,20 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
     <div className="flex flex-1 flex-col h-full overflow-hidden relative animate-in fade-in zoom-in-95 duration-500">
       
       {/* Header Overlay (Share Button) */}
-      <div className="absolute top-0 right-0 pt-3 sm:pt-4 pr-4 sm:pr-6 md:pr-8 z-10">
+      <div className="absolute top-0 right-0 pt-3 sm:pt-4 pr-4 sm:pr-6 md:pr-8 z-10 hidden md:block">
         {chatId && messages.length > 0 && (
           <Button 
             size="sm" 
             onClick={handleShare}
             disabled={isSharing}
-            className="h-8 rounded-full px-4 text-xs font-medium shadow-sm bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-8 rounded-full px-2 sm:px-4 text-xs font-medium shadow-sm bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isSharing ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" />
             ) : (
-              <Share2 className="mr-1.5 h-3.5 w-3.5" />
+              <Share2 className="h-3.5 w-3.5 sm:mr-1.5" />
             )}
-            Share
+            <span className="hidden sm:inline-block">Share</span>
           </Button>
         )}
       </div>
@@ -464,8 +464,8 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                   </div>
                 )}
                 
-                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'max-w-[85%]' : 'w-full sm:max-w-[850px]'}`}>
-                  <div className={`px-5 py-3.5 rounded-2xl text-[15px] ${
+                <div className={`flex flex-col gap-2 min-w-0 ${msg.role === 'user' ? 'max-w-[85%]' : 'w-full sm:max-w-[850px]'}`}>
+                  <div className={`px-5 py-3.5 rounded-2xl text-[15px] overflow-x-auto ${
                     msg.role === 'user' 
                       ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm leading-relaxed' 
                       : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm leading-[1.6]'

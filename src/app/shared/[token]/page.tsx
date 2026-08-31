@@ -157,14 +157,14 @@ export default function SharedChatPage() {
                     </div>
                   )}
                   
-                  <div className={`flex flex-col max-w-[90%] sm:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col min-w-0 max-w-[90%] sm:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-2 mb-1.5 px-1">
                       <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         {msg.role === 'user' ? 'Original User' : 'KnowledgeHub AI'}
                       </span>
                     </div>
                     
-                    <div className={`relative px-4 sm:px-5 py-3 sm:py-4 rounded-[20px] text-[14px] sm:text-[15px] shadow-sm transition-all ${
+                    <div className={`relative px-4 sm:px-5 py-3 sm:py-4 rounded-[20px] text-[14px] sm:text-[15px] shadow-sm transition-all overflow-x-auto ${
                     msg.role === 'user' 
                       ? 'bg-blue-600 text-white rounded-tr-sm' 
                       : 'bg-zinc-50 border border-zinc-100 text-zinc-800 dark:bg-zinc-950/50 dark:border-zinc-800/80 dark:text-zinc-200 rounded-tl-sm leading-[1.6]'
