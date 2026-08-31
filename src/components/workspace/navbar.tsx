@@ -2,11 +2,13 @@
 
 import { Session } from "next-auth"
 import { MobileSidebar } from "./mobile-sidebar"
+
 import { useParams } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Share2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export function Navbar({ session }: { session: Session | null }) {
   const params = useParams()
@@ -42,7 +44,9 @@ export function Navbar({ session }: { session: Session | null }) {
     <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between bg-white/80 dark:bg-zinc-950/80 px-4 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 md:hidden">
       <div className="flex items-center gap-3">
         <MobileSidebar session={session} />
-        <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">KnowledgeHub AI</span>
+        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <span className="font-semibold text-[15px] tracking-tight text-zinc-900 dark:text-zinc-100">KnowledgeHub AI</span>
+        </Link>
       </div>
       
       {chatId && (

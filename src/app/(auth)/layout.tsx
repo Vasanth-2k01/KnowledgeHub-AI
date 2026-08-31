@@ -1,5 +1,6 @@
 import { Command, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AuthLayout({
   children,
@@ -55,8 +56,19 @@ export default function AuthLayout({
         </div>
       </div>
       
+      {/* Mobile Header - Hidden on Desktop */}
+      <header className="sticky top-0 z-50 flex h-16 w-full shrink-0 items-center justify-between border-b border-zinc-200/50 bg-white/80 px-4 backdrop-blur-xl dark:border-zinc-800/50 dark:bg-zinc-950/80 lg:hidden">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-sm shadow-blue-900/50 group-hover:shadow-blue-500/50 transition-all">
+            <Command className="h-5 w-5 text-white" />
+          </div>
+          <span className="font-semibold tracking-tight text-lg">KnowledgeHub AI</span>
+        </Link>
+        <ThemeToggle />
+      </header>
+      
       {/* Right Section - Auth Form */}
-      <div className="flex flex-1 items-center justify-center p-4 sm:p-8 animate-in fade-in zoom-in-95 duration-500 slide-in-from-bottom-4">
+      <div className="flex flex-1 items-center justify-center p-4 pb-12 sm:p-8 animate-in fade-in zoom-in-95 duration-500 slide-in-from-bottom-4">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[420px]">
           {children}
         </div>

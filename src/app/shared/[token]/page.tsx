@@ -56,7 +56,7 @@ export default function SharedChatPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-sm">
             <Command className="h-5 w-5 text-white" />
           </div>
-          <span className="font-semibold tracking-tight text-lg hidden sm:inline-block">
+          <span className="font-semibold tracking-tight text-lg">
             KnowledgeHub AI
           </span>
         </Link>
