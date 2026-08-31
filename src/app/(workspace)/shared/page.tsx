@@ -176,27 +176,34 @@ export default function SharedChatsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50 h-[180px]">
+              <div key={i} className="flex flex-col rounded-[20px] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50">
                 <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="h-5 w-3/4 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
-                    <div className="h-5 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800 animate-pulse shrink-0"></div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse shrink-0"></div>
+                    <div className="h-8 w-8 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse shrink-0"></div>
                   </div>
-                  <div className="mt-auto pt-4 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="h-3 w-12 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
-                      <div className="h-3 w-20 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                  
+                  <div className="mt-4 flex-1 flex flex-col">
+                    <div className="space-y-2 mb-4">
+                      <div className="h-4 w-3/4 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                      <div className="h-4 w-1/2 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="h-3 w-10 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
-                      <div className="h-3 w-24 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                    
+                    <div className="mt-auto pt-4 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="h-3 w-12 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                        <div className="h-3 w-20 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-3 w-10 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                        <div className="h-3 w-24 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                      </div>
+                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-zinc-100 dark:border-zinc-800/50">
+                        <div className="h-3 w-12 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                        <div className="h-4 w-16 rounded-md bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-3 border-t border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-b-2xl h-11">
-                  <div className="h-full border-r border-zinc-100 dark:border-zinc-800/80 bg-zinc-100 dark:bg-zinc-800/50 animate-pulse rounded-bl-2xl"></div>
-                  <div className="h-full border-r border-zinc-100 dark:border-zinc-800/80 bg-zinc-100 dark:bg-zinc-800/50 animate-pulse"></div>
-                  <div className="h-full bg-zinc-100 dark:bg-zinc-800/50 animate-pulse rounded-br-2xl"></div>
                 </div>
               </div>
             ))}
@@ -236,7 +243,7 @@ export default function SharedChatsPage() {
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100" />}>
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                      <DropdownMenuContent align="start" className="w-48 rounded-xl">
                         {chat.isShared ? (
                           <>
                             <DropdownMenuItem className="cursor-pointer" onClick={() => handleCopyLink(chat.shareToken)}>

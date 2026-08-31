@@ -10,6 +10,7 @@ import {
   Command,
   ArrowRight
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   const features = [
@@ -58,7 +59,8 @@ export default function Home() {
             <span className="font-semibold tracking-tight text-lg">KnowledgeHub AI</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors">
+            <ThemeToggle />
+            <Link href="/login" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors hidden sm:block">
               Log in
             </Link>
             <Link href="/register">

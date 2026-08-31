@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import Link from "next/link"
 import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface SharedMessage {
   role: "user" | "assistant"
@@ -67,7 +68,8 @@ export default function SharedChatPage() {
               <span className="hidden sm:inline-block font-medium">Copy Link</span>
             </Button>
           )}
-          <Link href="/login" className="inline-flex items-center justify-center h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold px-4 sm:px-5 transition-colors shadow-sm ml-2">
+          <ThemeToggle />
+          <Link href="/login" className="inline-flex items-center justify-center h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold px-4 sm:px-5 transition-colors shadow-sm ml-2 sm:ml-0">
             Sign In <ArrowRight className="ml-1.5 h-3.5 w-3.5 hidden sm:inline-block" />
           </Link>
         </div>

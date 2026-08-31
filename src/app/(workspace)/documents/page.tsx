@@ -475,7 +475,7 @@ export default function DocumentsPage() {
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100" />}>
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                      <DropdownMenuContent align="start" className="w-40 rounded-xl">
                         <DropdownMenuItem className="cursor-pointer" onClick={() => downloadDocument(doc._id, doc.originalFileName)}>Download</DropdownMenuItem>
                         {doc.processingStatus === 'failed' && (
                           <DropdownMenuItem 

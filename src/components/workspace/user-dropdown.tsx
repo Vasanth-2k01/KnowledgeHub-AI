@@ -36,7 +36,7 @@ export function UserDropdown({ user }: { user: Session["user"] }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-xl p-2 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800/50 w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-xl p-2 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800/50 w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer">
         <Avatar className="h-8 w-8">
           <AvatarImage src={user.image || ""} alt={user.name || "User"} />
           <AvatarFallback className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 font-medium">
