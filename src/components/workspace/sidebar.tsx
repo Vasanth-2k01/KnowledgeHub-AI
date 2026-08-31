@@ -39,6 +39,11 @@ const bottomRoutes = [
     icon: FileText,
     href: "/documents",
   },
+  {
+    label: "Shared",
+    icon: Share2,
+    href: "/shared",
+  }
 ]
 
 

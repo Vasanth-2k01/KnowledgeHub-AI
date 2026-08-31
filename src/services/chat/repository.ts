@@ -2,6 +2,7 @@ import connectDB from "@/config/db";
 import { ChatModel, IChat } from "@/models/Chat";
 import { MessageModel, IMessage } from "@/models/Message";
 import { Types } from "mongoose";
+import crypto from "crypto";
 
 export class ChatRepository {
   /**
@@ -102,5 +103,75 @@ export class ChatRepository {
     await connectDB();
     await ChatModel.findByIdAndDelete(chatId);
     await MessageModel.deleteMany({ chatId: new Types.ObjectId(chatId) });
+  }
+
+  /**
+   * Enables sharing for a chat and returns the token.
+   */
+  static async enableShare(chatId: string, userId: string): Promise<string | null> {
+    await connectDB();
+    const chat = await ChatModel.findOne({ _id: new Types.ObjectId(chatId), userId: new Types.ObjectId(userId) });
+    if (!chat) return null;
+
+    let token = chat.shareToken;
+    if (!token) {
+      token = crypto.randomUUID();
+    }
+
+    await ChatModel.findByIdAndUpdate(chatId, {
+      isShared: true,
+      shareToken: token,
+      sharedAt: chat.sharedAt || new Date(),
+    });
+
+    return token;
+  }
+
+  /**
+   * Disables sharing for a chat.
+   */
+  static async disableShare(chatId: string, userId: string): Promise<boolean> {
+    await connectDB();
+    const result = await ChatModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(chatId), userId: new Types.ObjectId(userId) },
+      { isShared: false }
+    );
+    return !!result;
+  }
+  
+  /**
+   * Deletes a share link completely.
+   */
+  static async deleteShare(chatId: string, userId: string): Promise<boolean> {
+    await connectDB();
+    const result = await ChatModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(chatId), userId: new Types.ObjectId(userId) },
+      { $set: { isShared: false }, $unset: { shareToken: 1, sharedAt: 1 } }
+    );
+    return !!result;
+  }
+
+  /**
+   * Gets all chats that have a share token for the management page.
+   */
+  static async getSharedChats(userId: string): Promise<IChat[]> {
+    await connectDB();
+    return ChatModel.find({ 
+      userId: new Types.ObjectId(userId),
+      shareToken: { $exists: true, $ne: null }
+    })
+    .sort({ sharedAt: -1 })
+    .lean();
+  }
+
+  /**
+   * Gets a chat by its public share token.
+   */
+  static async getChatByToken(token: string): Promise<IChat | null> {
+    await connectDB();
+    return ChatModel.findOne({ 
+      shareToken: token, 
+      isShared: true 
+    }).lean();
   }
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Send, Paperclip, FilePlus2, Library, User, Bot, Loader2, X, Check, File, FileText, FileArchive, FileCode, FileType2 } from "lucide-react"
+import { Send, Paperclip, Library, User, Bot, Loader2, X, Check, File, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import TextareaAutosize from "react-textarea-autosize"
 import { useChatContext } from "@/context/ChatContext"
@@ -50,9 +50,35 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
   const [chatId, setChatId] = useState<string | undefined>(initialChatId)
   
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   const [activeCitations, setActiveCitations] = useState<CitationSource[]>([])
   const [activeCitationId, setActiveCitationId] = useState<string | null>(null)
   
+  const handleShare = async () => {
+    if (!chatId) return;
+    
+    setIsSharing(true);
+    try {
+      const response = await fetch(`/api/chats/${chatId}/share`, {
+        method: "POST",
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create share link");
+      }
+      
+      await navigator.clipboard.writeText(data.shareUrl);
+      toast.success("Share link copied to clipboard!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to share chat");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const handleCitationClick = (citationId: string, citations: CitationSource[]) => {
     setActiveCitations(citations);
     setActiveCitationId(citationId);
@@ -389,6 +415,26 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
 
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden relative animate-in fade-in zoom-in-95 duration-500">
+      
+      {/* Header Overlay (Share Button) */}
+      <div className="absolute top-0 right-0 pt-3 sm:pt-4 pr-4 sm:pr-6 md:pr-8 z-10">
+        {chatId && messages.length > 0 && (
+          <Button 
+            size="sm" 
+            onClick={handleShare}
+            disabled={isSharing}
+            className="h-8 rounded-full px-4 text-xs font-medium shadow-sm bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isSharing ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Share2 className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Share
+          </Button>
+        )}
+      </div>
+
       {/* Scrollable Chat Area */}
       <div className="flex-1 overflow-y-auto w-full">
         <div className="flex w-full max-w-4xl flex-col mx-auto min-h-full p-4 sm:p-8 pb-24 sm:pb-28 pt-10 sm:pt-20">
@@ -434,20 +480,6 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                       />
                     )}
                   </div>
-                  
-                  {/* Temporarily disabled citation functionality
-                  {msg.role === 'assistant' && msg.citations && msg.citations.length > 0 && (
-                    <div className="flex mt-1">
-                      <button 
-                        onClick={() => handleCitationClick(msg.citations![0].id, msg.citations!)}
-                        className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-                      >
-                        <span className="text-[13px] leading-none mb-[1px]">ⓘ</span>
-                        <span>Answer based on {msg.citations.length} source{msg.citations.length === 1 ? '' : 's'}</span>
-                      </button>
-                    </div>
-                  )}
-                  */}
                 </div>
 
                 {msg.role === 'user' && (

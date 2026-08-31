@@ -8,7 +8,12 @@ export default function proxy(req: NextRequest) {
   const { nextUrl } = req;
   const isLoggedIn = req.cookies.has('authjs.session-token') || req.cookies.has('__Secure-authjs.session-token');
 
-  const isProtectedRoute = protectedRoutes.some((route) => nextUrl.pathname.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) => {
+    if (route === '/shared') {
+      return nextUrl.pathname === '/shared';
+    }
+    return nextUrl.pathname.startsWith(route);
+  });
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   if (isAuthRoute) {
