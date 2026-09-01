@@ -34,7 +34,7 @@ interface Message {
 const SUGGESTED_PROMPTS = [
   "Explain this document",
   "Summarize my PDF",
-  "Generate interview questions",
+  // "Generate interview questions",
   "Compare two documents",
 ]
 
@@ -465,7 +465,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                 )}
                 
                 <div className={`flex flex-col gap-2 min-w-0 ${msg.role === 'user' ? 'max-w-[85%]' : 'w-full sm:max-w-[850px]'}`}>
-                  <div className={`px-5 py-3.5 rounded-2xl text-[15px] overflow-x-auto ${
+                  <div className={`px-5 py-3.5 rounded-2xl text-[15px] ${
                     msg.role === 'user' 
                       ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-tr-sm leading-relaxed' 
                       : 'bg-white border border-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm leading-[1.6]'
@@ -609,7 +609,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                     handleSubmit();
                   }
                 }}
-                placeholder="Message KnowledgeHub AI..."
+                placeholder={attachedDocuments.length > 0 ? "Ask anything about this document..." : "Select a document to start asking questions..."}
                 className="max-h-[300px] flex-1 resize-none overflow-hidden bg-transparent py-2.5 text-[15px] leading-relaxed text-zinc-900 placeholder:text-zinc-500 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 self-center"
                 maxRows={10}
                 disabled={isLoading}

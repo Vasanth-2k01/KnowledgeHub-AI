@@ -49,7 +49,7 @@ export function RegisterForm() {
   return (
     <div className="grid gap-4">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-start">
           
           {/* Name Field */}
           <div className="grid gap-1 text-zinc-950 dark:text-zinc-50 relative">
@@ -160,7 +160,7 @@ export function RegisterForm() {
           <Button 
             type="submit"
             disabled={isLoading} 
-            className="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 hover:shadow-md hover:shadow-blue-600/20 active:scale-[0.98] mt-1 font-semibold rounded-xl"
+            className="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 hover:shadow-md hover:shadow-blue-600/20 active:scale-[0.98] mt-1 font-semibold rounded-xl sm:col-span-2"
           >
             {isLoading && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

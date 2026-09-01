@@ -68,8 +68,8 @@ export default function AuthLayout({
       </header>
       
       {/* Right Section - Auth Form */}
-      <div className="flex flex-1 items-center justify-center p-4 pb-12 sm:p-8 animate-in fade-in zoom-in-95 duration-500 slide-in-from-bottom-4">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[420px]">
+      <div className="flex flex-1 items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-500 slide-in-from-bottom-4">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[460px]">
           {children}
         </div>
       </div>
