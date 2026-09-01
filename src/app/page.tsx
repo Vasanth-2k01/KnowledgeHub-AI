@@ -8,13 +8,15 @@ import {
   Command, ArrowRight, User, Bot, File, Database, 
   Search, Link as LinkIcon, ShieldCheck, FolderOpen,
   Network, Send, Workflow, Briefcase, Zap,
-  Layers, Lightbulb, Blocks
+  Layers, Lightbulb, Blocks, Menu, X
 } from 'lucide-react';
 
 // ==========================================
 // 1. NAVIGATION
 // ==========================================
 const Header = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <header className="fixed top-0 z-50 w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900/50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
@@ -40,11 +42,32 @@ const Header = () => {
           </Link>
           <Link href="/register">
             <Button className="h-8 md:h-9 rounded-full bg-zinc-100 text-zinc-950 hover:bg-white font-medium px-4 text-xs cursor-pointer">
-              Get Started <ArrowRight className="ml-1 h-3 w-3" />
+              Get Started <ArrowRight className="ml-1 h-3 w-3 hidden sm:inline-block" />
             </Button>
           </Link>
+          <button 
+            className="md:hidden text-zinc-400 hover:text-white transition-colors ml-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+      
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="md:hidden bg-zinc-950 border-b border-zinc-900 px-4 py-4 space-y-4 shadow-xl"
+        >
+          <Link href="#product" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-white">Product</Link>
+          <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-white">How It Works</Link>
+          <Link href="#sources" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-white">Sources</Link>
+          <Link href="#use-cases" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-white">Use Cases</Link>
+          <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-white sm:hidden border-t border-zinc-900 pt-4">Sign In</Link>
+        </motion.div>
+      )}
     </header>
   );
 };
@@ -64,7 +87,7 @@ const Hero = () => {
         <p className="text-sm font-bold tracking-[0.2em] text-blue-500 mb-6 uppercase">
           AI-POWERED KNOWLEDGE WORKSPACE
         </p>
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-[1.05] text-white mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-[1.05] text-white mb-6">
           TURN YOUR DOCUMENTS<br />
           <span className="text-zinc-500">INTO ANSWERS.</span>
         </h1>
@@ -97,23 +120,28 @@ const ProductExperience = () => {
   const fullText = "What authentication methods does the platform use?";
   
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let isActive = true;
     const sequence = async () => {
       await new Promise(r => setTimeout(r, 1000));
+      if (!isActive) return;
       setDemoState('typing');
       for (let i = 0; i <= fullText.length; i++) {
+        if (!isActive) return;
         setTypedText(fullText.substring(0, i));
         await new Promise(r => setTimeout(r, 35));
       }
       await new Promise(r => setTimeout(r, 300));
+      if (!isActive) return;
       setDemoState('user_posted');
       await new Promise(r => setTimeout(r, 400));
+      if (!isActive) return;
       setDemoState('searching');
       await new Promise(r => setTimeout(r, 1500));
+      if (!isActive) return;
       setDemoState('answered');
     };
     sequence();
-    return () => clearTimeout(timeout);
+    return () => { isActive = false; };
   }, []);
 
   return (
@@ -174,10 +202,10 @@ const ProductExperience = () => {
               </div>
 
               {/* Input Box Mockup */}
-              <div className="relative flex items-center justify-between p-3 pl-5 mt-4 rounded-full border border-zinc-800 bg-zinc-900/50 text-zinc-100 text-sm md:text-base">
-                {demoState === 'idle' && <span className="text-zinc-600 absolute left-5 pointer-events-none">Ask anything about your knowledge...</span>}
-                {(demoState === 'user_posted' || demoState === 'answered') && <span className="text-zinc-600 absolute left-5 pointer-events-none">Ask a follow-up question...</span>}
-                <span className="relative z-10">{(demoState === 'idle' || demoState === 'typing') ? typedText : ''}</span>
+              <div className="relative flex items-center justify-between p-3 pl-5 mt-4 rounded-full border border-zinc-800 bg-zinc-900/50 text-zinc-100 text-sm md:text-base overflow-hidden">
+                {demoState === 'idle' && <span className="text-zinc-600 absolute left-5 pointer-events-none truncate max-w-[75%] md:max-w-none">Ask anything about your knowledge...</span>}
+                {(demoState === 'user_posted' || demoState === 'answered') && <span className="text-zinc-600 absolute left-5 pointer-events-none truncate max-w-[75%] md:max-w-none">Ask a follow-up question...</span>}
+                <span className="relative z-10 truncate max-w-[80%] md:max-w-none">{(demoState === 'idle' || demoState === 'typing') ? typedText : ''}</span>
                 {demoState === 'typing' && <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-5 bg-blue-500 ml-1" />}
                 {demoState === 'searching' && (
                   <div className="ml-auto flex items-center gap-2">
@@ -186,7 +214,7 @@ const ProductExperience = () => {
                       <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
                       <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
-                    <span className="text-xs text-zinc-500 font-medium ml-2 mr-8">Searching knowledge...</span>
+                    <span className="text-[10px] md:text-xs text-zinc-500 font-medium ml-2 mr-6 md:mr-8 truncate">Searching knowledge...</span>
                   </div>
                 )}
                 <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0 ml-auto z-10 relative cursor-pointer hover:bg-zinc-700 transition-colors">
@@ -641,7 +669,7 @@ const TechnologyFoundation = () => {
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-32 bg-blue-900/10 blur-[100px] pointer-events-none rounded-full"></div>
       
-      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 mb-12 text-center relative z-10">
+      <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-12 text-center relative z-10">
         POWERED BY A MODERN AI & KNOWLEDGE STACK
       </p>
       
@@ -735,9 +763,23 @@ export default function Home() {
       const href = anchor.getAttribute('href');
       if (href && href.startsWith('#') && href.length > 1) {
         e.preventDefault();
-        const element = document.querySelector(href);
+        const element = document.querySelector(href) as HTMLElement;
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const isMobile = window.innerWidth < 768;
+          if (isMobile) {
+            // For mobile, we calculate an offset so the sticky header doesn't cover content
+            const headerOffset = href === '#sources' ? 140 : 80;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.scrollY - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          } else {
+            // Keep the exact same desktop behavior per user request
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
           // Update URL without jumping
           window.history.pushState(null, '', href);
         }
@@ -769,8 +811,8 @@ export default function Home() {
       <footer className="w-full pt-16 pb-8 bg-zinc-950 border-t border-zinc-900">
         <div className="max-w-6xl mx-auto px-4 flex flex-col gap-12">
           
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div className="max-w-xs">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-12 md:gap-8 text-center md:text-left">
+            <div className="max-w-xs flex flex-col items-center md:items-start">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600 text-white transition-colors">
                   <Command className="h-3.5 w-3.5" />
@@ -782,15 +824,15 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-12 md:gap-24">
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap justify-center md:justify-end gap-12 md:gap-24 w-full md:w-auto">
+              <div className="flex flex-col items-center md:items-start gap-4">
                 <span className="text-xs font-semibold text-white uppercase tracking-wider">Links</span>
                 <Link href="#product" className="text-sm text-zinc-500 hover:text-white transition-colors">Product</Link>
                 <Link href="#how-it-works" className="text-sm text-zinc-500 hover:text-white transition-colors">How it works</Link>
                 <Link href="#sources" className="text-sm text-zinc-500 hover:text-white transition-colors">Sources</Link>
                 <Link href="#use-cases" className="text-sm text-zinc-500 hover:text-white transition-colors">Use Cases</Link>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-center md:items-start gap-4">
                 <span className="text-xs font-semibold text-white uppercase tracking-wider">Account</span>
                 <Link href="/login" className="text-sm text-zinc-500 hover:text-white transition-colors">Sign In</Link>
                 <Link href="/register" className="text-sm text-zinc-500 hover:text-white transition-colors">Register</Link>
