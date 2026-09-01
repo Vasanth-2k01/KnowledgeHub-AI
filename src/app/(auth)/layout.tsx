@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-zinc-50 md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 dark:bg-zinc-950">
+    <div className="relative flex h-screen overflow-hidden flex-col bg-zinc-50 md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 dark:bg-zinc-950">
       {/* Left Section - Hidden on Mobile/Tablet */}
       <div className="relative hidden h-full flex-col bg-zinc-950 p-10 text-white lg:flex">
         {/* Abstract Background Elements */}
@@ -36,7 +36,7 @@ export default function AuthLayout({
               Your intelligent knowledge workspace.
             </h1>
             <p className="text-lg leading-relaxed text-zinc-400">
-              Transform how your team stores, searches, and interacts with internal documentation using advanced AI and semantic search.
+              Experience a smarter way to interact with your data. Upload your documents, ask complex questions, and get precise answers backed by verifiable citations.
             </p>
             
             <div className="pt-6 space-y-4">
@@ -44,7 +44,7 @@ export default function AuthLayout({
                 'AI Powered Semantic Search',
                 'Secure Authentication',
                 'Chat with Library',
-                'Team Collaboration',
+                'Verifiable Citations',
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-zinc-300">
                   <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
