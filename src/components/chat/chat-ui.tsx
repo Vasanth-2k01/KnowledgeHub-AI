@@ -650,14 +650,12 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         
       </div>
       
-      {/* Temporarily disabled citation sidebar
       <CitationSidebar 
         isOpen={isCitationSidebarOpen}
         onClose={() => setIsCitationSidebarOpen(false)}
         citations={activeCitations}
         activeCitationId={activeCitationId}
       />
-      */}
     </div>
   )
 }
