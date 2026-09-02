@@ -15,6 +15,7 @@ interface ChatContextProps {
   refreshChats: () => Promise<void>;
   addChatOptimistically: (chat: ChatItem) => void;
   updateChatOptimistically: (chatId: string, updates: Partial<ChatItem>) => void;
+  deleteChatOptimistically: (chatId: string) => void;
   newChatTrigger: number;
   triggerNewChat: () => void;
 }
@@ -60,6 +61,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const deleteChatOptimistically = (chatId: string) => {
+    setChats((prev) => prev.filter((c) => c._id !== chatId));
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -68,6 +73,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         refreshChats: fetchChats,
         addChatOptimistically,
         updateChatOptimistically,
+        deleteChatOptimistically,
         newChatTrigger,
         triggerNewChat: () => setNewChatTrigger(prev => prev + 1),
       }}
