@@ -21,7 +21,7 @@ export class LLMService {
       const response = await hf.chatCompletion({
         model: model,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 512,
+        max_tokens: 4096,
         temperature: 0.1,
       });
 
@@ -60,7 +60,7 @@ export class LLMService {
           const stream = hf.chatCompletionStream({
             model: model,
             messages: [{ role: "user", content: prompt }],
-            max_tokens: 2048,
+            max_tokens: 4096,
             temperature: 0.1,
           });
 
@@ -93,6 +93,7 @@ export class LLMService {
 
           if (finishReason === "length") {
             console.warn("[LLM] ⚠️ Response was truncated because max_tokens was reached.");
+            controller.enqueue(encoder.encode("\n\n*(Response truncated due to length limits. Please ask me to continue if needed.)*"));
           }
 
           controller.close();
