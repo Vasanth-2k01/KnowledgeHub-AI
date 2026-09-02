@@ -160,7 +160,7 @@ export default function SharedChatPage() {
                   <div className={`flex flex-col min-w-0 max-w-[90%] sm:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-2 mb-1.5 px-1">
                       <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
-                        {msg.role === 'user' ? 'Original User' : 'KnowledgeHub AI'}
+                        {msg.role === 'user' ? 'User' : 'KnowledgeHub AI'}
                       </span>
                     </div>
                     
@@ -172,7 +172,7 @@ export default function SharedChatPage() {
                       {msg.role === 'user' ? (
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       ) : (
-                        <MarkdownRenderer content={msg.content} />
+                        <MarkdownRenderer content={msg.content.replace(/\[SOURCE_\d+\]/g, '')} />
                       )}
                     </div>
                   </div>
