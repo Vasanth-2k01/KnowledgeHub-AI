@@ -42,9 +42,20 @@ This project covers authentication, file storage, vector databases, embeddings, 
 - 💬 **Multi-turn Chat** — Conversational memory using the last N messages as context
 - 📚 **Chat History** — All conversations are saved and accessible from the sidebar
 - 🔍 **Semantic Search** — Query across all your documents from a dedicated search page
-- ⚙️ **Admin Settings** — Configure chunk size, overlap, topK, similarity threshold, and AI models from the UI
+- 🔗 **Shareable Chats** — Generate a public share link for any conversation to share with others
 - ☁️ **Flexible Storage** — Store files locally or on Vercel Blob, switchable via environment variable
 - 🌙 **Dark / Light Theme** — Full theme support with system preference detection
+
+---
+
+## 🚧 Roadmap
+
+The following features are planned for upcoming releases:
+
+- 👤 **User Profile** — Editable profile page with avatar, display name, and account details
+- 🗂️ **Workspaces** — Organize documents and chats into separate, named workspaces
+- ⚙️ **Settings Panel** — In-app configuration for RAG parameters, model selection, and storage preferences
+- 🤖 **Agentic Mode** — Upgrade to a fully agentic AI model capable of multi-step reasoning, tool use, and autonomous task execution
 
 ---
 
