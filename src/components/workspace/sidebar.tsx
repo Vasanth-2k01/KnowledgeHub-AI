@@ -111,7 +111,9 @@ export function Sidebar({ session }: { session: Session | null }) {
     const chatId = chatToDelete
 
     deleteChatOptimistically(chatId)
-    if (pathname === `/chat/${chatId}`) {
+    
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+    if (currentPath === `/chat/${chatId}`) {
       router.push("/chat")
     }
     

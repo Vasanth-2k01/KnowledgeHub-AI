@@ -11,10 +11,11 @@ import "highlight.js/styles/github-dark.css";
 
 import { CitationSource } from "@/services/search/semanticSearch";
 
-interface MarkdownRendererProps {
+export interface MarkdownRendererProps {
   content: string;
   citations?: CitationSource[];
   onCitationClick?: (id: string) => void;
+  isStreaming?: boolean;
 }
 
 const CitationMarker = ({ label, source, onClick }: { label: string; source?: CitationSource; onClick: () => void }) => (
@@ -45,21 +46,24 @@ function renderWithCitations(
   citations?: CitationSource[],
   onClick?: (id: string) => void
 ): React.ReactNode {
+  // CITATION UI DISABLED FOR NOW
+  return children;
+  
   if (!citations || citations.length === 0 || !onClick) return children;
 
   const processNode = (node: React.ReactNode): React.ReactNode => {
     if (typeof node === 'string') {
-      // Split by contiguous blocks of citations, accounting for spaces and commas between them
-      const parts = node.split(/((?:\[SOURCE_\d+\][\s,]*)+)/g);
+      // Split by contiguous blocks of citations, accounting for [SOURCE_1] [SOURCE_2] or [SOURCE_1, SOURCE_2]
+      const parts = node.split(/((?:\[SOURCE_\d+(?:,\s*SOURCE_\d+)*\][\s,]*)+)/g);
       
       return parts.map((part, i) => {
-        if (/^(?:\[SOURCE_\d+\][\s,]*)+$/.test(part)) {
-          const sourceMatches = [...part.matchAll(/\[SOURCE_(\d+)\]/g)];
+        if (/^(?:\[SOURCE_\d+(?:,\s*SOURCE_\d+)*\][\s,]*)+$/.test(part)) {
+          const sourceMatches = [...part.matchAll(/SOURCE_(\d+)/g)];
           
           if (sourceMatches.length > 0) {
             return (
               <span key={i} className="inline-flex items-center gap-[3px] mx-1 align-middle">
-                {sourceMatches.map((match, j) => {
+                {sourceMatches.slice(0, 2).map((match, j) => {
                   const sourceId = `SOURCE_${match[1]}`;
                   const source = citations.find(c => c.id === sourceId);
                   if (!source) return null;
@@ -135,7 +139,7 @@ const CopyButton = ({ text }: { text: string }) => {
   );
 };
 
-export function MarkdownRenderer({ content, citations, onCitationClick }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, citations, onCitationClick, isStreaming }: MarkdownRendererProps) {
   const components: Components = {
     // Headings
     h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-zinc-900 dark:text-zinc-100" {...props} />,
@@ -221,6 +225,19 @@ export function MarkdownRenderer({ content, citations, onCitationClick }: Markdo
     },
   };
 
+  let displayContent = content;
+  
+  // If the message is currently streaming in, we aggressively hide all citation tags.
+  // This prevents the raw `[SOURCE_1]` text from appearing to the user during generation.
+  if (isStreaming) {
+    // Hide all complete citation tokens
+    displayContent = displayContent.replace(/\[SOURCE_\d+\]/g, '');
+    
+    // Hide incomplete citation tokens at the very end of the streamed content
+    // This temporarily hides `[`, `[S`, `[SOURCE_1`, etc. until the final `]` arrives.
+    displayContent = displayContent.replace(/\[(S(O(U(R(C(E(_\d*)?)?)?)?)?)?)?$/, '');
+  }
+
   return (
     <div className="prose dark:prose-invert max-w-none break-words">
       <ReactMarkdown
@@ -228,7 +245,7 @@ export function MarkdownRenderer({ content, citations, onCitationClick }: Markdo
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
       >
-        {content}
+        {displayContent}
       </ReactMarkdown>
     </div>
   );

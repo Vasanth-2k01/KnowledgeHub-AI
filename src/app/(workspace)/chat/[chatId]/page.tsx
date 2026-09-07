@@ -34,6 +34,7 @@ export default async function ChatDetailPage({
 
     return (
       <ChatUI 
+        key={chatId}
         initialChatId={chatId} 
         initialMessages={messages} 
       />

@@ -25,6 +25,18 @@ export function CitationSidebar({ isOpen, onClose, citations, activeCitationId }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Reset filter when closed
+  useEffect(() => {
+    if (!isOpen) {
+      // Wait for the slide-out animation to finish before resetting state
+      const timer = setTimeout(() => {
+        setFilter('All');
+        setExpandedIds(new Set());
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   // Auto-scroll to active citation
   useEffect(() => {
     if (isOpen && activeCitationId && panelRef.current) {

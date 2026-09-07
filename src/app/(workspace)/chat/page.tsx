@@ -3,6 +3,6 @@
 import { ChatUI } from "@/components/chat/chat-ui"
 
 export default function ChatPage() {
-  return <ChatUI />
+  return <ChatUI key="new-chat" />
 }
 

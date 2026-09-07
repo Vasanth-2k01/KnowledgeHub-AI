@@ -301,9 +301,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
             lastMessageAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
-          
-          // Update URL without triggering a full re-render
-          window.history.replaceState(null, "", `/chat/${activeChatId}`);
+          // We defer the URL update to avoid Next.js App Router from remounting the component during streaming
         }
       }
 
@@ -345,6 +343,8 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         buffer = events.pop() || ''; // Keep the incomplete event in the buffer
 
         for (const event of events) {
+          // console.log("[Stream Event] Raw:", event);
+          
           const lines = event.split('\n');
           if (lines[0] === 'event: sources' && lines[1]?.startsWith('data: ')) {
             const data = lines[1].substring(6);
@@ -371,7 +371,11 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
               currentAssistantMessage += JSON.parse(data);
               setMessages(prev => {
                 const newMessages = [...prev];
-                newMessages[newMessages.length - 1].content = currentAssistantMessage;
+                const lastIndex = newMessages.length - 1;
+                newMessages[lastIndex] = {
+                  ...newMessages[lastIndex],
+                  content: currentAssistantMessage
+                };
                 return newMessages;
               });
             } catch (e) {
@@ -379,6 +383,10 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
             }
           }
         }
+      }
+      
+      if (!currentAssistantMessage.trim()) {
+        throw new Error("No response was generated. The AI model might be warming up or the connection timed out. Please try again.");
       }
       
       // 3. Background update title if this is a new chat
@@ -410,6 +418,11 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
       setMessages(prev => [...prev, { role: "assistant", content: `Something went wrong while generating the answer: ${error.message}` }]);
     } finally {
       setIsLoading(false);
+      
+      // Update URL safely after stream completes to avoid interrupting generation
+      if (isNewChat && activeChatId) {
+        window.history.replaceState(null, "", `/chat/${activeChatId}`);
+      }
     }
   };
 
@@ -477,6 +490,7 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
                         content={msg.content} 
                         citations={msg.citations}
                         onCitationClick={(id) => handleCitationClick(id, msg.citations || [])}
+                        isStreaming={isLoading && index === messages.length - 1}
                       />
                     )}
                   </div>
@@ -650,12 +664,14 @@ export function ChatUI({ initialChatId, initialMessages }: ChatUIProps) {
         
       </div>
       
+      {/* 
       <CitationSidebar 
         isOpen={isCitationSidebarOpen}
         onClose={() => setIsCitationSidebarOpen(false)}
         citations={activeCitations}
         activeCitationId={activeCitationId}
       />
+      */}
     </div>
   )
 }

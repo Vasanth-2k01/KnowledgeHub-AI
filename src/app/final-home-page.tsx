@@ -32,7 +32,7 @@ const Header = () => {
         <nav className="hidden md:flex items-center gap-8">
           <Link href="#product" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Product</Link>
           <Link href="#how-it-works" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">How It Works</Link>
-          <Link href="#features" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Features</Link>
+          <Link href="#sources" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Sources</Link>
           <Link href="#use-cases" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Use Cases</Link>
         </nav>
 
@@ -92,7 +92,7 @@ const Hero = () => {
           <span className="text-zinc-500">INTO ANSWERS.</span>
         </h1>
         <p className="text-lg md:text-xl text-zinc-400 max-w-2xl leading-relaxed mb-8 px-4">
-          Connect your documents to an intelligent knowledge workspace. Ask questions naturally and get contextual answers from the information you've provided.
+          Connect your documents to an intelligent knowledge workspace. Ask questions naturally, get answers grounded in your knowledge, and explore the sources behind every response.
         </p>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link href="/register">
@@ -117,7 +117,7 @@ const Hero = () => {
 const ProductExperience = () => {
   const [demoState, setDemoState] = useState<'idle' | 'typing' | 'user_posted' | 'searching' | 'answered'>('idle');
   const [typedText, setTypedText] = useState('');
-  const fullText = "What technologies are mentioned in this document?";
+  const fullText = "What authentication methods does the platform use?";
   
   useEffect(() => {
     let isActive = true;
@@ -188,7 +188,9 @@ const ProductExperience = () => {
                           <div className="flex flex-col gap-3 w-full max-w-[95%]">
                             <div className="px-4 md:px-5 py-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-tl-sm text-[14px] md:text-[15px] leading-relaxed shadow-sm">
                               <p>
-                                The document mentions several technologies across frontend, backend, databases, and development tools, including React.js, TypeScript, Node.js, MongoDB, Docker, and AWS.
+                                The application uses JWT authentication and role-based access control to manage user permissions and secure protected resources.
+                                <span className="inline-flex items-center justify-center ml-1.5 mr-0.5 w-5 h-5 rounded bg-blue-900/40 text-blue-400 text-[10px] font-mono border border-blue-800/50 cursor-pointer hover:bg-blue-800/50 transition-colors relative -top-0.5">1</span>
+                                <span className="inline-flex items-center justify-center ml-1.5 w-5 h-5 rounded bg-blue-900/40 text-blue-400 text-[10px] font-mono border border-blue-800/50 cursor-pointer hover:bg-blue-800/50 transition-colors relative -top-0.5">2</span>
                               </p>
                             </div>
                           </div>
@@ -221,6 +223,45 @@ const ProductExperience = () => {
               </div>
             </div>
           </div>
+
+          {/* Right Sidebar: Sources */}
+          <div className="w-full md:w-80 bg-zinc-900/20 p-6 flex flex-col gap-4 border-t md:border-t-0 border-zinc-900">
+            <div className="flex items-center gap-2 text-sm font-medium text-zinc-300 pb-2 border-b border-zinc-800/50">
+              <Database className="h-4 w-4 text-zinc-500" /> Source View
+            </div>
+            {demoState === 'answered' && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-3">
+                
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 hover:border-zinc-700 transition-colors cursor-pointer ring-1 ring-blue-500/20">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono flex items-center justify-center border border-zinc-700">1</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><File className="h-3.5 w-3.5 text-blue-500" /><span className="truncate">Architecture.pdf</span></div>
+                      <div className="mt-1 text-xs text-zinc-500 uppercase tracking-wider font-semibold">Authentication</div>
+                      <div className="mt-2 text-xs text-zinc-400 line-clamp-3 leading-relaxed border-l-2 border-zinc-800 pl-2">
+                        "...implementation utilizes JWT authentication and authorization. Upon successful login..."
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 hover:border-zinc-700 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono flex items-center justify-center border border-zinc-700">2</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><File className="h-3.5 w-3.5 text-blue-500" /><span className="truncate">Security.pdf</span></div>
+                      <div className="mt-1 text-xs text-zinc-500 uppercase tracking-wider font-semibold">Access Control</div>
+                      <div className="mt-2 text-xs text-zinc-400 line-clamp-3 leading-relaxed border-l-2 border-zinc-800 pl-2">
+                        "...enforces role-based permissions at the API gateway layer to validate administrative actions..."
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </motion.div>
+            )}
+          </div>
+
         </div>
       </motion.div>
     </section>
@@ -234,13 +275,10 @@ const ProblemTransformation = () => {
   return (
     <section className="w-full py-24 md:py-32 bg-zinc-900/30 border-y border-zinc-900 overflow-hidden">
       <div className="max-w-5xl mx-auto px-4 text-center">
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-6 md:mb-8">
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-16 md:mb-24">
           YOUR KNOWLEDGE IS EVERYWHERE.<br />
           <span className="text-zinc-500">FINDING ANSWERS SHOULDN'T BE.</span>
         </h2>
-        <p className="text-zinc-400 max-w-2xl mx-auto mb-16 md:mb-24 text-sm md:text-base">
-          Your important information is scattered across documents, files, and notes. KnowledgeHub brings it together into one place you can actually interact with.
-        </p>
         
         <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-8">
           
@@ -275,7 +313,7 @@ const ProblemTransformation = () => {
             <ul className="space-y-3 text-sm text-zinc-300 font-medium">
               <li className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Ask</li>
               <li className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Answer</li>
-              <li className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Understand</li>
+              <li className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Verify</li>
             </ul>
           </div>
         </div>
@@ -304,7 +342,7 @@ const HowItWorks = () => {
           <div className="text-5xl font-bold text-zinc-800 mb-6 font-mono tracking-tighter">01</div>
           <h4 className="text-xl font-bold text-white mb-3">Connect your knowledge</h4>
           <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
-            Upload PDFs, Word documents, text files, and Markdown files to build your personal knowledge base.
+            Upload PDFs, Word documents, text files, and Markdown. Build your secure knowledge base in seconds.
           </p>
           <div className="h-32 bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center justify-center">
              <div className="flex items-center gap-3 px-4 py-2 bg-zinc-950 border border-zinc-700/50 rounded-lg shadow-sm">
@@ -334,15 +372,13 @@ const HowItWorks = () => {
         {/* Step 3 */}
         <div className="flex flex-col h-full text-center md:text-left">
           <div className="text-5xl font-bold text-zinc-800 mb-6 font-mono tracking-tighter">03</div>
-          <h4 className="text-xl font-bold text-white mb-3">Find what matters</h4>
+          <h4 className="text-xl font-bold text-white mb-3">Verify every answer</h4>
           <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
-            KnowledgeHub retrieves relevant information from your connected knowledge and turns it into clear, contextual answers.
+            Explore inline citations. Click to view the exact paragraph in the original document the AI read.
           </p>
           <div className="h-32 bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center justify-center">
              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 w-full shadow-sm text-left">
-                <div className="flex gap-2 items-center text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">
-                  <File className="h-3 w-3" /> Source Context
-                </div>
+                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Citation [1]</div>
                 <div className="text-xs text-zinc-300 border-l-2 border-blue-500 pl-2 line-clamp-2">
                   "Q3 revenue grew by 24% year-over-year, driven primarily by enterprise software sales..."
                 </div>
@@ -356,84 +392,89 @@ const HowItWorks = () => {
 };
 
 // ==========================================
-// 6. MAIN PRODUCT FEATURE (Contextual Answers)
+// 6. SIGNATURE FEATURE (Sources & Citations)
 // ==========================================
-const ContextualAnswersDemo = () => {
-  const [activeStage, setActiveStage] = useState<number | null>(null);
+const VerificationDemo = () => {
+  const [activeCitation, setActiveCitation] = useState<number | null>(null);
 
   return (
-    <section id="features" className="w-full py-16 md:py-20 max-w-6xl mx-auto px-4 relative">
+    <section id="sources" className="w-full py-16 md:py-20 max-w-6xl mx-auto px-4 relative">
       <div className="mb-8 md:mb-10 text-center md:text-left">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">
-          AI ANSWERS GROUNDED IN YOUR KNOWLEDGE.
+          AI ANSWERS YOU CAN VERIFY.
         </h2>
         <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto md:mx-0">
-          Ask questions about your documents and get contextual answers based on the information you've connected to your workspace.
+          Don't just trust what AI says. See the information behind every important answer.
         </p>
       </div>
 
       <div className="flex flex-col md:flex-row rounded-xl border border-zinc-800 bg-zinc-900/50 shadow-2xl overflow-hidden relative">
         
-        {/* Left: AI Process */}
+        {/* Left: AI Answer */}
         <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-zinc-800">
           <div className="text-sm font-semibold text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Bot className="h-4 w-4" /> The RAG Process
+            <Bot className="h-4 w-4" /> AI Answer
           </div>
           <div className="text-lg md:text-xl text-zinc-200 leading-relaxed font-medium">
-            When you ask a question, the system 
+            The system extracts text from uploaded documents, chunks the content to preserve context, and stores high-dimensional vector embeddings in Qdrant for semantic retrieval. 
+            
             <span 
-              onMouseEnter={() => setActiveStage(1)}
-              onMouseLeave={() => setActiveStage(null)}
-              className={`inline-flex items-center mx-1.5 px-2 py-0.5 rounded cursor-pointer transition-all duration-300 ${activeStage === 1 ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_15px_-3px_rgba(37,99,235,0.3)]' : 'bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600'}`}
+              onMouseEnter={() => setActiveCitation(1)}
+              onMouseLeave={() => setActiveCitation(null)}
+              className={`inline-flex items-center justify-center ml-2 mr-1 w-6 h-6 rounded text-xs font-mono border cursor-pointer transition-all duration-300 relative -top-0.5
+                ${activeCitation === 1 
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]' 
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700'}
+              `}
             >
-              retrieves relevant context
+              1
             </span>
-            from your connected documents, injecting it into the prompt so the AI can 
             <span 
-              onMouseEnter={() => setActiveStage(2)}
-              onMouseLeave={() => setActiveStage(null)}
-              className={`inline-flex items-center mx-1.5 px-2 py-0.5 rounded cursor-pointer transition-all duration-300 ${activeStage === 2 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)]' : 'bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600'}`}
+              onMouseEnter={() => setActiveCitation(2)}
+              onMouseLeave={() => setActiveCitation(null)}
+              className={`inline-flex items-center justify-center ml-1 w-6 h-6 rounded text-xs font-mono border cursor-pointer transition-all duration-300 relative -top-0.5
+                ${activeCitation === 2 
+                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]' 
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700'}
+              `}
             >
-              synthesize an accurate answer
+              2
             </span>
-            grounded in your actual data.
           </div>
           <p className="mt-8 text-xs text-zinc-500 border-t border-zinc-800/50 pt-4">
-            Hover over the highlighted steps to see how semantic search powers your workspace.
+            Every citation connects you directly to the original source document. Hover over a number to instantly view the context.
           </p>
         </div>
 
-        {/* Right: Visualization Panel */}
+        {/* Right: Sources Panel */}
         <div className="w-full md:w-[450px] bg-zinc-950 p-6 md:p-8 flex flex-col gap-4">
           <div className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-            <Database className="h-4 w-4" /> System Backend
+            <Database className="h-4 w-4" /> Source View
           </div>
 
-          {/* Retrieval Visualization */}
-          <div className={`rounded-xl p-4 border transition-all duration-300 relative ${activeStage === 1 ? 'bg-zinc-900 border-blue-500/50 shadow-[0_0_30px_-10px_rgba(37,99,235,0.15)] scale-[1.02] ring-1 ring-blue-500/20' : 'bg-zinc-900/50 border-zinc-800 opacity-60 grayscale scale-100'}`}>
+          {/* Source 1 */}
+          <div className={`rounded-xl p-4 border transition-all duration-300 relative ${activeCitation === 1 ? 'bg-zinc-900 border-blue-500/50 shadow-[0_0_30px_-10px_rgba(37,99,235,0.15)] scale-[1.02] ring-1 ring-blue-500/20' : 'bg-zinc-900/50 border-zinc-800 opacity-60 grayscale scale-100'}`}>
             <div className="flex items-start gap-3 mb-2">
-              <div className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors border ${activeStage === 1 ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>
-                <Search className="h-3 w-3" />
-              </div>
+              <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded text-[10px] font-mono flex items-center justify-center transition-colors border ${activeCitation === 1 ? 'bg-blue-600 text-white border-blue-500' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>1</div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><span className="truncate">Vector Search</span></div>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><File className="h-3.5 w-3.5 text-blue-500" /> <span className="truncate">Data_Processing.pdf</span></div>
+                <div className="mt-1 text-xs text-zinc-500 uppercase tracking-wider font-semibold">Ingestion Pipeline</div>
                 <div className="mt-2 text-xs text-zinc-400 line-clamp-3 leading-relaxed border-l-2 border-zinc-800 pl-2">
-                  "Query matched highly relevant information fragments from your connected knowledge base using vector similarity."
+                  "...uploaded files are <span className={activeCitation === 1 ? "bg-blue-900/40 text-blue-200 rounded-sm px-0.5" : ""}>parsed into semantic chunks and converted into vector embeddings</span> using the embedding model before being indexed..."
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Answer Generation Visualization */}
-          <div className={`rounded-xl p-4 border transition-all duration-300 relative ${activeStage === 2 ? 'bg-zinc-900 border-emerald-500/50 shadow-[0_0_30px_-10px_rgba(16,185,129,0.15)] scale-[1.02] ring-1 ring-emerald-500/20' : 'bg-zinc-900/50 border-zinc-800 opacity-60 grayscale scale-100'}`}>
+          {/* Source 2 */}
+          <div className={`rounded-xl p-4 border transition-all duration-300 relative ${activeCitation === 2 ? 'bg-zinc-900 border-emerald-500/50 shadow-[0_0_30px_-10px_rgba(16,185,129,0.15)] scale-[1.02] ring-1 ring-emerald-500/20' : 'bg-zinc-900/50 border-zinc-800 opacity-60 grayscale scale-100'}`}>
             <div className="flex items-start gap-3 mb-2">
-              <div className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors border ${activeStage === 2 ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/50' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>
-                <Bot className="h-3 w-3" />
-              </div>
+              <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded text-[10px] font-mono flex items-center justify-center transition-colors border ${activeCitation === 2 ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>2</div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><span className="truncate">LLM Generation</span></div>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-200"><File className="h-3.5 w-3.5 text-emerald-500" /> <span className="truncate">Vector_Storage.md</span></div>
+                <div className="mt-1 text-xs text-zinc-500 uppercase tracking-wider font-semibold">Semantic Retrieval</div>
                 <div className="mt-2 text-xs text-zinc-400 line-clamp-3 leading-relaxed border-l-2 border-zinc-800 pl-2">
-                  "Synthesizing response using strict context boundaries to prevent hallucinations and ensure factual accuracy."
+                  "...we rely on <span className={activeCitation === 2 ? "bg-emerald-900/40 text-emerald-200 rounded-sm px-0.5" : ""}>Qdrant as our primary vector database to efficiently search and retrieve these embeddings</span> during the RAG workflow..."
                 </div>
               </div>
             </div>
@@ -468,9 +509,9 @@ const Capabilities = () => {
             <div className="h-12 w-12 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 mb-6 shadow-md shadow-zinc-950">
               <LinkIcon className="h-5 w-5" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">Answers with context</h3>
+            <h3 className="text-2xl font-bold text-white mb-3">Answers with evidence</h3>
             <p className="text-zinc-400 leading-relaxed text-sm md:text-base">
-              Get responses that use the relevant information from your connected documents and knowledge base.
+              See supporting citations and understand exactly where important information comes from, eliminating AI hallucinations.
             </p>
           </div>
 
@@ -490,7 +531,7 @@ const Capabilities = () => {
             </div>
             <h3 className="text-2xl font-bold text-white mb-3">Built for serious work</h3>
             <p className="text-zinc-400 leading-relaxed text-sm md:text-base">
-              Designed for working with real documents, technical information, research, notes, and other knowledge-heavy content.
+              Create an organized environment for working with documents. Private workspaces and secure storage ensure your knowledge remains yours.
             </p>
           </div>
 
@@ -635,7 +676,7 @@ const TechnologyFoundation = () => {
       <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10 max-w-5xl mx-auto px-4 relative z-10">
         
         {/* Next.js */}
-        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default shadow-[0_0_15px_rgba(255,255,255,0.05)]">
+        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
           <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24ZM15.8239 15.845L15.8239 8.24584H17.2602L17.2602 15.845H15.8239ZM8.9749 15.845H7.58557V8.24584H8.81424L14.7335 15.845H8.9749Z"/>
           </svg>
@@ -643,7 +684,7 @@ const TechnologyFoundation = () => {
         </div>
 
         {/* MongoDB */}
-        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default shadow-[0_0_15px_rgba(34,197,94,0.05)]">
+        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
           <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21.213 14.525C20.61 20.301 13.914 24 12.016 24 10.117 24 2.85 20.046 2.85 11.233c0-7.398 6.784-10.748 8.653-11.215.114-.029.231-.016.335.035.105.05.188.134.237.238 2.052 4.318 8.621 11.385 9.138 14.234zM12 1.341C10.75 1.83 6.643 3.655 6.643 11.233c0 7.218 5.764 9.123 5.357 11.666 0 0 6.643-4.595 6.643-11.666 0-3.323-2.188-7.348-6.643-9.892z"/>
           </svg>
@@ -651,22 +692,15 @@ const TechnologyFoundation = () => {
         </div>
 
         {/* Qdrant */}
-        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default shadow-[0_0_15px_rgba(239,68,68,0.05)]">
+        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
           <Network className="h-5 w-5 text-red-500" />
           <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">Qdrant Vector DB</span>
         </div>
 
-        {/* React */}
+        {/* Hugging Face */}
         <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
-          <svg className="w-5 h-5 text-sky-400" viewBox="-11.5 -10.23174 23 20.46348">
-            <circle cx="0" cy="0" r="2.05" fill="currentColor"/>
-            <g stroke="currentColor" strokeWidth="1" fill="none">
-              <ellipse rx="11" ry="4.2"/>
-              <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
-              <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
-            </g>
-          </svg>
-          <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">React</span>
+          <div className="text-yellow-500 text-lg">🤗</div>
+          <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">Hugging Face</span>
         </div>
 
         {/* TypeScript */}
@@ -685,18 +719,6 @@ const TechnologyFoundation = () => {
           <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">Tailwind CSS</span>
         </div>
 
-        {/* Hugging Face */}
-        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
-          <div className="text-yellow-500 text-lg">🤗</div>
-          <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">Hugging Face</span>
-        </div>
-
-        {/* AI & RAG */}
-        <div className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 hover:bg-zinc-800/60 hover:border-zinc-700 transition-all cursor-default">
-          <Bot className="h-5 w-5 text-purple-400" />
-          <span className="text-zinc-400 font-medium text-sm group-hover:text-zinc-200 transition-colors">Semantic Search & RAG</span>
-        </div>
-
       </div>
     </section>
   );
@@ -713,7 +735,7 @@ const FinalCTA = () => {
           STOP SEARCHING.<br />START ASKING.
         </h2>
         <p className="text-base md:text-xl text-zinc-400 px-4 max-w-xl mx-auto">
-          Turn your documents into an intelligent knowledge workspace you can actually interact with.
+          Turn your documents into an intelligent knowledge workspace with answers backed by sources you can verify.
         </p>
         <div className="pt-4">
           <Link href="/register">
@@ -777,7 +799,7 @@ export default function Home() {
         <ProductExperience />
         <ProblemTransformation />
         <HowItWorks />
-        <ContextualAnswersDemo />
+        <VerificationDemo />
         <Capabilities />
         <UseCases />
         <ProductDirection />
@@ -798,7 +820,7 @@ export default function Home() {
                 <span className="font-semibold text-zinc-200">KnowledgeHub AI</span>
               </div>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                An intelligent knowledge workspace for asking better questions and finding answers grounded in your data.
+                An intelligent knowledge workspace for asking better questions and finding answers backed by real sources.
               </p>
             </div>
             
@@ -807,7 +829,7 @@ export default function Home() {
                 <span className="text-xs font-semibold text-white uppercase tracking-wider">Links</span>
                 <Link href="#product" className="text-sm text-zinc-500 hover:text-white transition-colors">Product</Link>
                 <Link href="#how-it-works" className="text-sm text-zinc-500 hover:text-white transition-colors">How it works</Link>
-                <Link href="#features" className="text-sm text-zinc-500 hover:text-white transition-colors">Features</Link>
+                <Link href="#sources" className="text-sm text-zinc-500 hover:text-white transition-colors">Sources</Link>
                 <Link href="#use-cases" className="text-sm text-zinc-500 hover:text-white transition-colors">Use Cases</Link>
               </div>
               <div className="flex flex-col items-center md:items-start gap-4">
