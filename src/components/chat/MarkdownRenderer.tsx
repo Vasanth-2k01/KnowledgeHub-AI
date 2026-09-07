@@ -49,6 +49,7 @@ function renderWithCitations(
   // CITATION UI DISABLED FOR NOW
   return children;
   
+  /*
   if (!citations || citations.length === 0 || !onClick) return children;
 
   const processNode = (node: React.ReactNode): React.ReactNode => {
@@ -64,7 +65,7 @@ function renderWithCitations(
             return (
               <span key={i} className="inline-flex items-center gap-[3px] mx-1 align-middle">
                 {sourceMatches.slice(0, 2).map((match, j) => {
-                  const sourceId = `SOURCE_${match[1]}`;
+                  const sourceId = \`SOURCE_\${match[1]}\`;
                   const source = citations.find(c => c.id === sourceId);
                   if (!source) return null;
                   
@@ -103,6 +104,7 @@ function renderWithCitations(
   };
 
   return processNode(children);
+  */
 }
 
 const CopyButton = ({ text }: { text: string }) => {
