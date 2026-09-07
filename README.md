@@ -12,7 +12,7 @@
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://knowledgehub-ai-khaki.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](./LICENSE)
 
-**[🌐 Live Demo](https://knowledgehub-ai-khaki.vercel.app)** &nbsp;·&nbsp; **[🎬 Demo Video](#demo)** &nbsp;·&nbsp; **[📸 Screenshots](#screenshots)**
+**[🌐 Live Demo](https://knowledgehub-ai-khaki.vercel.app)** &nbsp;·&nbsp; **[🎬 Demo Video](https://youtu.be/bAxCFyHznNw)**
 
 </div>
 
@@ -32,13 +32,7 @@ This project covers authentication, file storage, vector databases, embeddings, 
 
 [![Watch the Demo](https://img.youtube.com/vi/bAxCFyHznNw/maxresdefault.jpg)](https://youtu.be/bAxCFyHznNw)
 
----
 
-## 📸 Screenshots
-
-> *Screenshots will be added here — upload page, chat interface, search results, and settings.*
-
----
 
 ## ✨ Features
 
