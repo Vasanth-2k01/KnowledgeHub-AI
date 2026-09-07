@@ -30,7 +30,7 @@ This project covers authentication, file storage, vector databases, embeddings, 
 
 ## 🎬 Demo
 
-> 📹 *Demo video coming soon — check the [live app](https://knowledgehub-ai-khaki.vercel.app) to try it yourself.*
+[![Watch the Demo](https://img.youtube.com/vi/bAxCFyHznNw/maxresdefault.jpg)](https://youtu.be/bAxCFyHznNw)
 
 ---
 
@@ -183,7 +183,11 @@ npm install
 ### 3. Configure environment variables
 
 ```bash
+# Linux / macOS
 cp .env.example .env
+
+# Windows
+copy .env.example .env
 ```
 
 Open `.env` and fill in all required values (see [Environment Variables](#-environment-variables) below).
